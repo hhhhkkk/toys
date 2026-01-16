@@ -5,6 +5,7 @@ go 1.24.2
 require (
 	github.com/dromara/carbon/v2 v2.6.15
 	github.com/gin-gonic/gin v1.11.0
+	github.com/go-redis/redis/v7 v7.4.1
 	github.com/google/uuid v1.6.0
 	github.com/google/wire v0.7.0
 	github.com/spf13/viper v1.21.0
