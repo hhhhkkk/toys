@@ -1,0 +1,7 @@
+name: "mini-blog"
+version: "0.0.1"
+port: 8080
+host: "0.0.0.0"
+env: "prod"
+
+err_file: "runtime/error.log"
