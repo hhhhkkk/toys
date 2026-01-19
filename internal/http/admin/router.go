@@ -10,5 +10,7 @@ func NewAdminRouterProvider() router.IRouterGroup {
 	adminRG.AddRouter(router.NewGetRouter("/health", AdminHealth))
 	adminRG.AddRouter(router.NewGetRouter("/demoPanic", DemoPanic))
 
+	adminRG.AddRouter(router.NewGetRouter("/demoConfig", configPath))
+
 	return adminRG
 }
