@@ -11,6 +11,7 @@ func NewAdminRouterProvider() router.IRouterGroup {
 	adminRG.AddRouter(router.NewGetRouter("/demoPanic", DemoPanic))
 
 	adminRG.AddRouter(router.NewGetRouter("/demoConfig", configPath))
+	adminRG.AddRouter(router.NewGetRouter("/demoApp", appMiddleware))
 
 	return adminRG
 }

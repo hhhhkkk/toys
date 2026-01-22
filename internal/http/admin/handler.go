@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/hhhhkkk/mini-blog/config"
 	"github.com/hhhhkkk/mini-blog/internal/data"
+	"go.uber.org/zap"
 )
 
 type Admin struct {
@@ -41,4 +42,15 @@ var configPath gin.HandlerFunc = func(ctx *gin.Context) {
 		time.Sleep(500 * time.Millisecond)
 	}
 	ctx.JSON(http.StatusOK, ret)
+}
+
+var appMiddleware gin.HandlerFunc = func(ctx *gin.Context) {
+	_, exists := ctx.Get("app")
+	if !exists {
+		ctx.Abort()
+	}
+
+	logger := zap.NewNop()
+	logger.Info("logggggggg")
+	ctx.JSON(http.StatusOK, gin.H{"msg": "logged"})
 }

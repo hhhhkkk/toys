@@ -7,6 +7,7 @@ import (
 	"github.com/hhhhkkk/mini-blog/config"
 	"github.com/hhhhkkk/mini-blog/internal/job"
 	"github.com/hhhhkkk/mini-blog/router"
+	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -18,6 +19,7 @@ type App struct {
 	jobGroup       []job.IJobGroup
 	baseMiddleware []gin.HandlerFunc
 	routers        []router.IRouterGroup
+	logger         *zap.Logger
 }
 
 func NewApp(
@@ -26,6 +28,7 @@ func NewApp(
 	jobGroup []job.IJobGroup,
 	baseMiddleware []gin.HandlerFunc,
 	routers []router.IRouterGroup,
+	logger *zap.Logger,
 ) *App {
 	app := &App{
 		engine:         engine,
@@ -33,6 +36,7 @@ func NewApp(
 		jobGroup:       jobGroup,
 		baseMiddleware: baseMiddleware,
 		routers:        routers,
+		logger:         logger,
 	}
 	app.setupEngine()
 	app.setupRouter()
@@ -41,12 +45,16 @@ func NewApp(
 
 func (app *App) setupEngine() {
 	gin.DisableConsoleColor()
-	
+
 	// 根据环境设置 Gin 模式：生产环境使用 ReleaseMode，其他环境使用 DebugMode（默认）
 	if app.config.Env == "prod" {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
+	app.engine.Use(func(context *gin.Context) {
+		context.Set("app", app)
+		context.Next()
+	})
 	app.engine.Use(app.baseMiddleware...)
 }
 
@@ -62,6 +70,11 @@ func (app *App) setupRouter() {
 			ng.Handle(r.Method(), r.Path(), r.Handler())
 		}
 	}
+}
+
+// GetLogger 返回日志驱动
+func (app *App) GetLogger() *zap.Logger {
+	return app.logger
 }
 
 func (app *App) Run() error {

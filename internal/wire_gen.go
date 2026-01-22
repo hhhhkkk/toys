@@ -15,6 +15,7 @@ import (
 	"github.com/hhhhkkk/mini-blog/internal/http"
 	"github.com/hhhhkkk/mini-blog/internal/http/middleware"
 	"github.com/hhhhkkk/mini-blog/internal/job"
+	"go.uber.org/zap"
 )
 
 // Injectors from provider.go:
@@ -25,7 +26,8 @@ func InitApp() (*App, error) {
 	v := job.NewJobGroupProvider()
 	v2 := middleware.NewBaseMiddleware(appConfig)
 	v3 := http.NewRouterProvider()
-	app := NewApp(engine, appConfig, v, v2, v3)
+	logger := NewLogger()
+	app := NewApp(engine, appConfig, v, v2, v3, logger)
 	return app, nil
 }
 
@@ -35,6 +37,12 @@ func NewEngine() *gin.Engine {
 	return gin.New()
 }
 
+func NewLogger() *zap.Logger {
+	logger := zap.NewNop()
+	return logger.Named("test")
+}
+
 var ProviderSet = wire.NewSet(http.RouterProviderSet, middleware.ProviderSet, biz.ProviderSet, data.ProviderSet, config.ProviderSet, job.ProviderSet, NewEngine,
+	NewLogger,
 	NewApp,
 )
