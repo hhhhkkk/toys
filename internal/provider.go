@@ -26,6 +26,8 @@ func NewLogger() *zap.Logger {
 }
 
 var ProviderSet = wire.NewSet(
+	NewLogger,
+
 	http.RouterProviderSet,
 	middleware.ProviderSet,
 	biz.ProviderSet,
@@ -33,7 +35,6 @@ var ProviderSet = wire.NewSet(
 	config.ProviderSet,
 	job.ProviderSet,
 	NewEngine,
-	NewLogger,
 	NewApp,
 )
 

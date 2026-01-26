@@ -33,3 +33,10 @@ runtime/
 # System
 .DS_Store
 Thumbs.db
+
+# wire
+internal/wire_gen.go
+
+# cmd
+
+cmd/script/*

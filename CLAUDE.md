@@ -1,90 +1,93 @@
 # CLAUDE.md
 
-本文件用于指导 Claude Code (claude.ai/code) 在此代码库中的工作。
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 **重要：在此项目中与用户交流请使用中文。**
 
 ## 构建与开发命令
 
 ```bash
-make run      # 直接启动应用
+make run      # 直接启动应用 (go run ./cmd)
 make build    # 完整构建：生成 Wire 代码 + 编译到 ./bin/app
 make wire     # 仅生成 Wire 依赖注入代码
-go test ./config/...  # 运行测试（可添加其他包路径）
+go test ./... # 运行所有测试
 ```
-
-启动应用：构建后运行 `./bin/app`，或开发时使用 `make run`。
 
 ## 架构概览
 
-这是一个基于 Go 的轻量级博客平台，采用标准三层架构（biz/data/model），使用 Gin 进行 HTTP 路由，Wire 进行编译期依赖注入，Viper 进行配置管理。
+基于 Go 的轻量级博客平台，三层架构 + 依赖注入 + 路由接口模式。
 
-### 依赖注入 (Wire)
-
-项目使用 Google Wire 进行编译期依赖注入。关键模式：
-
-- 使用 `//go:build wireinject` 构建标记定义 providers
-- 在每个包的 `provider.go` 中通过 `wire.NewSet()` 导出 `ProviderSet`
-- 生成的代码位于 `wire_gen.go`（请勿编辑）
-- 修改 providers 后运行 `make wire` 重新生成
-
-主注入器：`internal/provider.go`（构建标记：`wireinject`）
-
-### 三层架构
+### 目录结构
 
 ```
 internal/
-├── biz/        # 业务逻辑层 - Service
-├── data/       # 数据访问层 - Repository/DAO
-├── model/      # 数据模型 - Entity/DTO
-├── http/       # HTTP 层 - Controller/Handler
+├── biz/        # 业务逻辑层（Service）
+├── data/       # 数据访问层（Repository/DAO）
+├── model/      # 数据模型（Entity/DTO）
+├── http/       # HTTP 层
 │   ├── middleware/   # 中间件 (Recovery, Logger, Tracer)
-│   ├── api/          # API 路由组
-│   └── admin/        # Admin 路由组
-└── job/        # 后台任务
+│   ├── api/          # API 路由组 (handler.go, router.go, provider.go)
+│   ├── admin/        # Admin 路由组
+│   │   └── user/     # 用户模块 (UserController)
+│   └── provider.go   # 路由聚合 (RouterProviderSet)
+└── job/        # 后台任务 (IJob, IJobGroup)
 ```
 
-### HTTP 层结构
+### 依赖注入 (Wire)
 
-每个路由组（api/admin）包含三个文件：
-- `handler.go` - Handler 函数定义
-- `router.go` - 路由注册逻辑（使用 `router.New*Router()` 辅助函数）
-- `provider.go` - Wire ProviderSet
+- 主注入器：`internal/provider.go`（标记：`//go:build wireinject`）
+- 各包 `provider.go` 通过 `wire.NewSet()` 导出 `ProviderSet`
+- `make wire` 重新生成注入代码
 
-**注意**：`internal/http/provider.go` 的 `RouterProviderSet` 只包含 `NewRouterProvider`，不应包含 api/admin 的 ProviderSet（避免 Wire 绑定冲突）。
+### 路由注册模式
 
-### 应用初始化流程
+使用 `router` 包的接口模式注册路由：
+
+```go
+// router/IRouter: 单个路由
+router.NewGetRouter("/path", handler)  // 自动命名
+router.NewRouter("POST", "/path", "name", handler)  // 自定义命名
+
+// router/IRouterGroup: 路由组
+api.NewApiRouterProvider()      // 返回 []router.IRouterGroup
+admin.NewAdminRouterProvider()  // 注入 UserController 等依赖
+```
+
+**注意**：`internal/http/provider.go` 的 `RouterProviderSet` 只聚合各路由组，不应包含具体 Handler 的 ProviderSet。
+
+### 应用初始化
 
 ```
-main.go → internal.InitApp() → Wire 构建依赖 → App.Run()
-     ↓
+main.go → InitApp() → Wire 构建 → App.Run()
+         ↓
 Gin Engine + 基础中间件 → 路由组 → Handler → Biz → Data
 ```
 
-基础中间件（全局应用，按顺序）：
-1. Recovery - 捕获 panic，记录到 runtime/{name}-error-YYYY-MM-DD.log
-2. Logger - 访问日志记录到 runtime/{name}-access-YYYY-MM-DD.log
-3. Tracer - 生成/传递 X-TRACE-ID 请求头
+基础中间件（顺序）：
+1. Recovery - 捕获 panic，写入 `runtime/{name}-error-YYYY-MM-DD.log`
+2. Logger - 访问日志，写入 `runtime/{name}-access-YYYY-MM-DD.log`
+3. Tracer - 生成/传递 `X-TRACE-ID`
 
-### 添加新功能
-
-1. `model/` - 定义数据结构
-2. `data/` - 实现数据访问（database、cache 等）
-3. `biz/` - 实现业务逻辑，依赖 data 层
-4. `http/` - 定义 Handler，依赖 biz 层，在 router.go 中注册路由
-5. 修改对应 `provider.go` 添加 ProviderSet
-6. 运行 `make wire` 重新生成依赖注入代码
+`App` 结构体可通过 `context.Set("app", app)` 获取，内置 `GetLogger()` 方法。
 
 ### 后台任务
 
-通过 `job.ProviderSet` 注册的任务使用 `sync.WaitGroup` 并发运行。自定义任务需实现 `job.IJob` 接口。任务支持基于上下文的优雅关闭。
+- `job.IJob` 接口：`Run(ctx context.Context) error` + `Name() string`
+- `job.IJobGroup` 聚合任务，使用 `sync.WaitGroup` 并发执行
+- 通过上下文实现优雅关闭
+- 在 `job/provider.go` 的 `NewJobGroupProvider()` 中注册
 
 ### 配置
 
-运行时配置通过 Viper 从 `config/app.yml` 加载。关键路径通过 `config.AppConfig` 结构体访问。
+- 入口：`config/app.yml`
+- 结构体：`config.AppConfig`（Name, Version, Port, Host, ErrorPath, Env）
+- 解析：`config.NewAppConfig()` 使用 Viper
 
-### 当前路由
+### 添加新功能步骤
 
-- `GET /api/health` - API 健康检查
-- `GET /admin/health` - 管理后台健康检查
-- `GET /admin/demoPanic` - 演示 panic 恢复中间件
+1. `model/` - 定义数据结构
+2. `data/` - 实现数据访问
+3. `biz/` - 业务逻辑，依赖 data 层
+4. `http/admin/user/` - 创建模块目录，定义 Controller
+5. `internal/http/admin/provider.go` - 添加 Controller 和 RouterProvider 到 ProviderSet
+6. `make wire` - 重新生成依赖注入

@@ -62,13 +62,24 @@ func (app *App) setupEngine() {
 // app.jobGroup = append(app.jobGroup)
 // }
 
+func registerRoute(rg router.IRouterGroup, app *App) {
+	ng := app.engine.Group("/" + rg.Name())
+	ng.Use(rg.Middlewares()...)
+	for _, r := range rg.Routers() {
+		ng.Handle(r.Method(), r.Path(), r.Handler())
+	}
+	for _, subGroup := range rg.SubGroups() {
+		registerRoute(subGroup, app)
+	}
+}
+
 func (app *App) setupRouter() {
 	for _, rg := range app.routers {
-		ng := app.engine.Group("/" + rg.Name())
-		ng.Use(rg.Middlewares()...)
-		for _, r := range rg.Routers() {
-			ng.Handle(r.Method(), r.Path(), r.Handler())
-		}
+		registerRoute(rg, app)
+	}
+
+	for index, router := range app.engine.Routes() {
+		fmt.Printf("index: %d, method: %s, path: %s, handler: %s\n", index, router.Method, router.Path, router.Handler)
 	}
 }
 

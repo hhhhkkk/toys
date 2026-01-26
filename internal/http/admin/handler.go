@@ -7,13 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/hhhhkkk/mini-blog/config"
-	"github.com/hhhhkkk/mini-blog/internal/data"
 	"go.uber.org/zap"
 )
-
-type Admin struct {
-	cache data.Cache
-}
 
 var AdminHealth gin.HandlerFunc = func(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{

@@ -23,6 +23,8 @@ type IRouterGroup interface {
 	Middlewares() []gin.HandlerFunc
 	AddRouter(r ...IRouter)
 	AddMiddleware(m ...gin.HandlerFunc)
+	NewSubGroup(name string, routers ...IRouter) IRouterGroup
+	SubGroups() []IRouterGroup
 }
 
 type router struct {
@@ -61,9 +63,11 @@ func NewRouter(m, p, n string, f gin.HandlerFunc) IRouter {
 }
 
 type routerGroup struct {
-	name        string
-	routers     []IRouter
+	name    string
+	routers []IRouter
+
 	middlewares []gin.HandlerFunc
+	subGroups   []IRouterGroup
 }
 
 func NewRouterGroup(name string, routers ...IRouter) IRouterGroup {
@@ -71,6 +75,7 @@ func NewRouterGroup(name string, routers ...IRouter) IRouterGroup {
 		name:        name,
 		routers:     routers,
 		middlewares: make([]gin.HandlerFunc, 0),
+		subGroups:   make([]IRouterGroup, 0),
 	}
 }
 
@@ -92,6 +97,16 @@ func (rg *routerGroup) Routers() []IRouter {
 
 func (rg *routerGroup) Middlewares() []gin.HandlerFunc {
 	return rg.middlewares
+}
+
+func (rg *routerGroup) NewSubGroup(name string, routers ...IRouter) IRouterGroup {
+	subGroup := NewRouterGroup(rg.name+"/"+name, routers...)
+	rg.subGroups = append(rg.subGroups, subGroup)
+	return subGroup
+}
+
+func (rg *routerGroup) SubGroups() []IRouterGroup {
+	return rg.subGroups
 }
 
 func NewRouterWithoutName(m, p string, f gin.HandlerFunc) IRouter {
