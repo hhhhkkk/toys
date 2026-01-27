@@ -3,22 +3,10 @@ package config
 import (
 	"log"
 
-	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 )
 
-// cacheItem 单个缓存实例配置
-type CacheConfig struct {
-	Driver string `json:"driver" yaml:"driver"`
-	Host   string `json:"host" yaml:"host"`
-	Port   int    `json:"port" yaml:"port"`
-	Auth   string `json:"auth" yaml:"auth"`
-	DB     int    `json:"db" yaml:"db"`
-	viper  *viper.Viper
-}
-
 // NewCacheConfig 创建并初始化缓存配置
-// 从 ./config/cache.yml 文件加载配置
 func NewCacheConfig() *CacheConfig {
 	cr := viper.New()
 	cr.AddConfigPath("./config")
@@ -36,7 +24,6 @@ func NewCacheConfig() *CacheConfig {
 		log.Printf("failed to unmarshal cache config: %v", err)
 		return &CacheConfig{}
 	}
-	cacheConfig.viper = cr
 	return &cacheConfig
 }
 
@@ -46,22 +33,22 @@ func NewCacheConfig() *CacheConfig {
 func (c *CacheConfig) WatchConfig() <-chan *CacheConfig {
 	configChan := make(chan *CacheConfig)
 
-	c.viper.WatchConfig()
-	c.viper.OnConfigChange(func(in fsnotify.Event) {
-		// 创建新的配置实例（包含 watcher 引用）
-		newConfig := &CacheConfig{
-			viper: c.viper,
-		}
+	// c.viper.WatchConfig()
+	// c.viper.OnConfigChange(func(in fsnotify.Event) {
+	// 	// 创建新的配置实例（包含 watcher 引用）
+	// 	newConfig := &CacheConfig{
+	// 		viper: c.viper,
+	// 	}
 
-		// 反序列化新配置
-		if err := c.viper.Unmarshal(newConfig); err != nil {
-			log.Printf("failed to unmarshal new cache config: %v", err)
-			return // 忽略无效的配置变更
-		}
+	// 	// 反序列化新配置
+	// 	if err := c.viper.Unmarshal(newConfig); err != nil {
+	// 		log.Printf("failed to unmarshal new cache config: %v", err)
+	// 		return // 忽略无效的配置变更
+	// 	}
 
-		// 发送新配置指针到 channel
-		configChan <- newConfig
-	})
+	// 	// 发送新配置指针到 channel
+	// 	configChan <- newConfig
+	// })
 
 	return configChan
 }

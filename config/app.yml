@@ -1,7 +1,14 @@
-name: "mini-blog"
-version: "0.0.1"
-port: 8080
-host: "0.0.0.0"
-env: "prod"
-
-err_file: "runtime/error.log"
+server:
+  name: "mini-blog"
+  version: "0.0.1"
+  port: 8080
+  host: "0.0.0.0"
+  env: "prod"
+log:
+  err_file: "runtime/error.log"
+cache:
+  driver: "redis"
+  host: "127.0.0.1"
+  port: 6379
+  password: ""
+  db: 0

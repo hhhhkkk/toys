@@ -2,4 +2,4 @@ package config
 
 import "github.com/google/wire"
 
-var ProviderSet = wire.NewSet(NewAppConfig, NewCacheConfig)
+var ProviderSet = wire.NewSet(NewServerConfig, NewCacheConfig)
