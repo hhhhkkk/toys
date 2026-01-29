@@ -13,16 +13,10 @@ import (
 	"github.com/hhhhkkk/mini-blog/internal/http"
 	"github.com/hhhhkkk/mini-blog/internal/http/middleware"
 	"github.com/hhhhkkk/mini-blog/internal/job"
-	"go.uber.org/zap"
 )
 
 func NewEngine() *gin.Engine {
 	return gin.New()
-}
-
-func NewLogger() *zap.Logger {
-	logger := zap.NewNop()
-	return logger.Named("test")
 }
 
 var ProviderSet = wire.NewSet(

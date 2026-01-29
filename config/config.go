@@ -2,9 +2,38 @@ package config
 
 import (
 	"os"
+	"sync"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 )
+
+type observer func(config Config)
+
+type observerList struct {
+	observers []observer
+}
+
+func (ol *observerList) AddObserver(fn observer) {
+	ol.observers = append(ol.observers, fn)
+}
+
+func (ol *observerList) Notify(config Config) {
+	for _, fn := range ol.observers {
+		go fn(config)
+	}
+}
+
+var (
+	mu sync.Mutex
+	ol = &observerList{}
+)
+
+func AddObserver(fn observer) {
+	mu.Lock()
+	defer mu.Unlock()
+	ol.AddObserver(fn)
+}
 
 type ServerConfig struct {
 	Name      string `json:"name" yaml:"name"`
@@ -23,16 +52,15 @@ type LogConfig struct {
 // cacheItem 单个缓存实例配置
 type CacheConfig struct {
 	Driver string `json:"driver" yaml:"driver"`
-	Host   string `json:"host" yaml:"host"`
-	Port   int    `json:"port" yaml:"port"`
+	Dsn    string `json:"dsn" yaml:"dsn"`
 	Auth   string `json:"auth" yaml:"auth"`
 	DB     int    `json:"db" yaml:"db"`
 }
 
 type Config struct {
-	server ServerConfig `yaml:"server"`
-	log    LogConfig    `yml:"log"`
-	cache  CacheConfig  `yaml:"cache"`
+	Server ServerConfig `yaml:"server"`
+	Log    LogConfig    `yml:"log"`
+	Cache  CacheConfig  `yaml:"cache"`
 }
 
 // 项目根目录
@@ -45,7 +73,7 @@ func GetRootPath() string {
 	return root_path
 }
 
-func NewServerConfig() *Config {
+func NewServerConfig() Config {
 	cr := viper.New()
 
 	cr.AddConfigPath("./")
@@ -60,5 +88,15 @@ func NewServerConfig() *Config {
 	if err := cr.Unmarshal(&config); err != nil {
 		panic(err)
 	}
-	return &config
+
+	go func() {
+		cr.OnConfigChange(func(in fsnotify.Event) {
+			if err := cr.Unmarshal(&config); err != nil {
+				panic(err)
+			}
+			ol.Notify(config)
+		})
+		cr.WatchConfig()
+	}()
+	return config
 }

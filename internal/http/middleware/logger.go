@@ -8,8 +8,8 @@ import (
 	"github.com/hhhhkkk/mini-blog/config"
 )
 
-func Logger(app *config.AppConfig) gin.HandlerFunc {
+func Logger(cfg config.Config) gin.HandlerFunc {
 	date := carbon.Now().Format("Y-m-d")
-	accessLog := fmt.Sprintf("%s-access-%s.log", app.Name, date)
-	return gin.LoggerWithWriter(NewMiniBlogErrorWriter(app, accessLog))
+	accessLog := fmt.Sprintf("%s-access-%s.log", cfg.Server.Name, date)
+	return gin.LoggerWithWriter(NewMiniBlogErrorWriter(cfg, accessLog))
 }

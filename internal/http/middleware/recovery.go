@@ -22,9 +22,9 @@ func (w *MiniBlogErrorWriter) Write(s []byte) (int, error) {
 	return w.f.Write(s)
 }
 
-func Recovery(app *config.AppConfig) gin.HandlerFunc {
+func Recovery(app config.Config) gin.HandlerFunc {
 	date := carbon.Now().Format("Y-m-d")
-	errorLog := fmt.Sprintf("%s-error-%s.log", app.Name, date)
+	errorLog := fmt.Sprintf("%s-error-%s.log", app.Server.Name, date)
 	return gin.RecoveryWithWriter(NewMiniBlogErrorWriter(app, errorLog), func(c *gin.Context, err any) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": "internal server error",
@@ -32,7 +32,7 @@ func Recovery(app *config.AppConfig) gin.HandlerFunc {
 	})
 }
 
-func NewMiniBlogErrorWriter(app *config.AppConfig, filename string) *MiniBlogErrorWriter {
+func NewMiniBlogErrorWriter(app config.Config, filename string) *MiniBlogErrorWriter {
 	rootPath := config.GetRootPath()
 	runtimePath := filepath.Join(rootPath, "runtime")
 

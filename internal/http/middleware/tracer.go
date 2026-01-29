@@ -6,7 +6,7 @@ import (
 	"github.com/hhhhkkk/mini-blog/config"
 )
 
-func Tracer(app *config.AppConfig) gin.HandlerFunc {
+func Tracer(app config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		traceID := c.GetHeader("X-TRACE-ID")
 		if traceID == "" {

@@ -15,7 +15,7 @@ var g errgroup.Group
 
 type App struct {
 	engine         *gin.Engine
-	config         *config.AppConfig
+	config         config.Config
 	jobGroup       []job.IJobGroup
 	baseMiddleware []gin.HandlerFunc
 	routers        []router.IRouterGroup
@@ -24,7 +24,7 @@ type App struct {
 
 func NewApp(
 	engine *gin.Engine,
-	appConfig *config.AppConfig,
+	appConfig config.Config,
 	jobGroup []job.IJobGroup,
 	baseMiddleware []gin.HandlerFunc,
 	routers []router.IRouterGroup,
@@ -47,7 +47,7 @@ func (app *App) setupEngine() {
 	gin.DisableConsoleColor()
 
 	// 根据环境设置 Gin 模式：生产环境使用 ReleaseMode，其他环境使用 DebugMode（默认）
-	if app.config.Env == "prod" {
+	if app.config.Server.Env == "prod" {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
@@ -79,18 +79,21 @@ func (app *App) setupRouter() {
 	}
 
 	for index, router := range app.engine.Routes() {
-		fmt.Printf("index: %d, method: %s, path: %s, handler: %s\n", index, router.Method, router.Path, router.Handler)
+		app.logger.Info(fmt.Sprintf("index: %d, method: %s, path: %s, handler: %s\n", index, router.Method, router.Path, router.Handler))
 	}
 }
 
-// GetLogger 返回日志驱动
-func (app *App) GetLogger() *zap.Logger {
-	return app.logger
+func NewLogger() *zap.Logger {
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		panic(err)
+	}
+	return logger
 }
 
 func (app *App) Run() error {
 	g.Go(func() error {
-		addr := fmt.Sprintf("%s:%d", app.config.Host, app.config.Port)
+		addr := fmt.Sprintf("%s:%d", app.config.Server.Host, app.config.Server.Port)
 		if err := app.engine.Run(addr); err != nil {
 			return err
 		}

@@ -6,7 +6,7 @@ import (
 	"github.com/hhhhkkk/mini-blog/config"
 )
 
-func NewBaseMiddleware(app *config.AppConfig) []gin.HandlerFunc {
+func NewBaseMiddleware(app config.Config) []gin.HandlerFunc {
 	return []gin.HandlerFunc{
 		Recovery(app),
 		Logger(app),

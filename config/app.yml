@@ -8,7 +8,6 @@ log:
   err_file: "runtime/error.log"
 cache:
   driver: "redis"
-  host: "127.0.0.1"
-  port: 6379
+  dsn: "127.0.0.1:6379"
   password: ""
   db: 0
