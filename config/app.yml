@@ -10,8 +10,10 @@ cache:
   driver: "redis"
   dsn: "127.0.0.1:6379"
   password: ""
+  # dsn: "124.223.90.6:63790"
+  # password: "redis_rm8ypr"
   db: 0
 db:
   driver: "mysql"
-  # dsn: "mini-blog:NWAxiiYFbHFzeaxC@tcp(124.223.90.6:3333)/mini-blog?charset=utf8mb4&parseTime=True&loc=Local"
-  dsn: "root:123456@tcp(127.0.0.1:3306)/mini-blog?charset=utf8mb4&parseTime=True&loc=Local"
+  dsn: "mini-blog:NWAxiiYFbHFzeaxC@tcp(124.223.90.6:3333)/mini-blog?charset=utf8mb4&parseTime=True&loc=Local"
+  # dsn: "root:123456@tcp(127.0.0.1:3306)/mini-blog?charset=utf8mb4&parseTime=True&loc=Local"

@@ -49,8 +49,9 @@ func NewCache(cfg config.Config) *Cache {
 // initConnection 初始化 Redis 连接
 func initConnection(cfg config.Config) (*redis.Client, error) {
 	conn := redis.NewClient(&redis.Options{
-		Addr: cfg.Cache.Dsn,
-		DB:   cfg.Cache.DB,
+		Addr:     cfg.Cache.Dsn,
+		DB:       cfg.Cache.DB,
+		Password: cfg.Cache.Password,
 	})
 
 	// 验证连接

@@ -51,10 +51,10 @@ type LogConfig struct {
 
 // cacheItem 单个缓存实例配置
 type CacheConfig struct {
-	Driver string `json:"driver" yaml:"driver"`
-	Dsn    string `json:"dsn" yaml:"dsn"`
-	Auth   string `json:"auth" yaml:"auth"`
-	DB     int    `json:"db" yaml:"db"`
+	Driver   string `json:"driver" yaml:"driver"`
+	Dsn      string `json:"dsn" yaml:"dsn"`
+	Password string `json:"password" yaml:"password"`
+	DB       int    `json:"db" yaml:"db"`
 }
 
 type Config struct {
