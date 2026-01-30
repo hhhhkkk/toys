@@ -61,6 +61,11 @@ type Config struct {
 	Server ServerConfig `yaml:"server"`
 	Log    LogConfig    `yml:"log"`
 	Cache  CacheConfig  `yaml:"cache"`
+	Db     DB           `yaml:"db"`
+}
+
+type DB struct {
+	Dsn string `yaml:"dsn"`
 }
 
 // 项目根目录

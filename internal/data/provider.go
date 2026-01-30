@@ -2,16 +2,19 @@ package data
 
 import (
 	"log"
+	"sync/atomic"
 
 	"github.com/go-redis/redis/v7"
 	"github.com/google/wire"
 	"github.com/hhhhkkk/mini-blog/config"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 // Cache Redis 缓存客户端封装
 // 提供配置热重载和优雅关闭支持
 type Cache struct {
-	conn *redis.Client
+	conn atomic.Value
 }
 
 // NewCache 创建缓存实例并初始化连接
@@ -23,18 +26,22 @@ func NewCache(cfg config.Config) *Cache {
 	if err != nil {
 		panic(err)
 	}
-	c := &Cache{
-		conn: client,
-	}
-	config.AddObserver(func(config config.Config) {
-		client, err := initConnection(config)
+	c := &Cache{}
+	c.conn.Store(client)
+	config.AddObserver(func(newConfig config.Config) {
+		// 创建新连接
+		newClient, err := initConnection(newConfig)
 		if err != nil {
 			log.Printf("failed to connect to redis: %v", err)
 			return
 		}
-		log.Printf("redis connected successfully: %s", client.Options().Addr)
+		log.Printf("redis reconnected successfully: %s", newClient.Options().Addr)
 
-		c.conn = client
+		oldValue := c.conn.Swap(newClient)
+		// 关闭旧连接
+		if ov, ok := oldValue.(*redis.Client); ok {
+			ov.Close()
+		}
 	})
 	return c
 }
@@ -56,7 +63,39 @@ func initConnection(cfg config.Config) (*redis.Client, error) {
 }
 
 func (c *Cache) GetClient() *redis.Client {
-	return c.conn
+	return c.conn.Load().(*redis.Client)
 }
 
-var ProviderSet = wire.NewSet(NewCache)
+type DB struct {
+	conn atomic.Value
+}
+
+func (db *DB) GetClient() *gorm.DB {
+	return db.conn.Load().(*gorm.DB)
+}
+
+func NewDB(cfg config.Config) *DB {
+	ret := &DB{}
+	db := initDB(cfg)
+	ret.conn.Store(db)
+	config.AddObserver(func(newCfg config.Config) {
+		old_db := ret.conn.Swap(initDB(newCfg))
+		if old, ok := old_db.(*gorm.DB); ok {
+			db, _ := old.DB()
+			db.Close()
+		}
+	})
+	return ret
+}
+
+func initDB(cfg config.Config) *gorm.DB {
+	db, err := gorm.Open(mysql.New(mysql.Config{
+		DSN: cfg.Db.Dsn,
+	}), &gorm.Config{})
+	if err != nil {
+		panic(err)
+	}
+	return db
+}
+
+var ProviderSet = wire.NewSet(NewCache, NewDB)
