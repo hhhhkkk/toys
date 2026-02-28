@@ -59,7 +59,7 @@ func (app *App) setupEngine() {
 }
 
 // func (app *App) setupJobGroup() {
-// app.jobGroup = append(app.jobGroup)
+// 	app.jobGroup = append(app.jobGroup)
 // }
 
 func registerRoute(rg router.IRouterGroup, app *App) {

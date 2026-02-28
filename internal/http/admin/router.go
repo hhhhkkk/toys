@@ -17,7 +17,7 @@ func NewAdminRouterProvider(uc *user.UserController, cache *data.Cache) router.I
 	// user
 	userRG := adminRG.NewSubGroup("users")
 	{
-		userRG.AddRouter(router.NewGetRouter("/:id", uc.GetUserCache))
+		// userRG.AddRouter(router.NewGetRouter("/:id", uc.GetUserCache))
 		userRG.AddRouter(router.NewGetRouter("/db/:id", uc.GetUserDB))
 	}
 	// adminRG.AddRouter(router.NewGetRouter("/", appMiddleware))

@@ -8,10 +8,10 @@ log:
   err_file: "runtime/error.log"
 cache:
   driver: "redis"
-  dsn: "127.0.0.1:6379"
-  password: ""
-  # dsn: "124.223.90.6:63790"
-  # password: "redis_rm8ypr"
+  # dsn: "127.0.0.1:6379"
+  # password: ""
+  dsn: "124.223.90.6:63790"
+  password: "redis_rm8ypr"
   db: 0
 db:
   driver: "mysql"

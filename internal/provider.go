@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
 	"github.com/hhhhkkk/mini-blog/config"
+	"github.com/hhhhkkk/mini-blog/internal/app"
 	"github.com/hhhhkkk/mini-blog/internal/biz"
 	"github.com/hhhhkkk/mini-blog/internal/data"
 	"github.com/hhhhkkk/mini-blog/internal/http"
@@ -23,6 +24,7 @@ var ProviderSet = wire.NewSet(
 	NewLogger,
 
 	http.RouterProviderSet,
+	app.ProviderSet,
 	middleware.ProviderSet,
 	biz.ProviderSet,
 	data.ProviderSet,

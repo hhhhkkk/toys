@@ -7,6 +7,7 @@ import (
 	"github.com/go-redis/redis/v7"
 	"github.com/google/wire"
 	"github.com/hhhhkkk/mini-blog/config"
+	user "github.com/hhhhkkk/mini-blog/internal/biz/repository/admin"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -99,4 +100,4 @@ func initDB(cfg config.Config) *gorm.DB {
 	return db
 }
 
-var ProviderSet = wire.NewSet(NewCache, NewDB)
+var ProviderSet = wire.NewSet(wire.Bind(new(user.Repo), new(*AdminUserRepoImpl)), NewCache, NewDB, NewRepoImpl)
