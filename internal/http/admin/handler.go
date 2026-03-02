@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var AdminHealth gin.HandlerFunc = func(ctx *gin.Context) {
+var Health gin.HandlerFunc = func(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "admin ok",
 	})

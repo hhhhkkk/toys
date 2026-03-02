@@ -1,46 +1,42 @@
 package admin
 
 import (
-	"context"
 	"errors"
 
 	"github.com/hhhhkkk/mini-blog/internal/biz/admin/entity"
 	repo "github.com/hhhhkkk/mini-blog/internal/biz/repository/admin"
-	"github.com/hhhhkkk/mini-blog/internal/data"
 	"go.uber.org/zap"
-	"gorm.io/gorm"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserBiz struct {
-	db     *data.DB
-	cache  *data.Cache
 	logger *zap.Logger
 	repo   repo.Repo
 }
 
-func NewUserBiz(db *data.DB, cache *data.Cache, logger *zap.Logger, userRepo repo.Repo) *UserBiz {
+func NewUserBiz(logger *zap.Logger, userRepo repo.Repo) *UserBiz {
 	return &UserBiz{
-		db:     db,
-		cache:  cache,
 		logger: logger,
 		repo:   userRepo,
 	}
 }
 
-func (u *UserBiz) EmailExists(ctx context.Context, email string, uid uint) (bool, error) {
-	query := gorm.G[data.User](u.db.GetClient()).Where("email = ?", email)
-	if uid > 0 {
-		query = query.Where("uid != ?", uid)
-	}
-	_, err := query.Where("uid != ?", uid).First(ctx)
-	return err == nil, err
+func (u *UserBiz) EmailExists(email string, uid uint) bool {
+	return u.repo.EmailExist(email, uid)
 }
 
-func (u *UserBiz) CreateUser(email, password, repeatPassword string) (*entity.User, error) {
-	if password != repeatPassword {
-		return nil, errors.New("两次输入不一致")
+func (u *UserBiz) CreateUser(email, password string) (*entity.User, error) {
+	if u.EmailExists(email, 0) {
+		return nil, errors.New("email already exists")
 	}
-	en := entity.NewUser(0, email, password)
+
+	// 密码加密
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+
+	en := entity.NewUser(0, email, string(hashedPassword), 0)
 	if _, err := u.repo.CreateUser(en); err != nil {
 		return nil, err
 	}

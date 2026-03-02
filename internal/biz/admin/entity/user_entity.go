@@ -1,15 +1,17 @@
 package entity
 
 type User struct {
-	Uid      uint   `gorm:"primaryKey;autoIncrement"`
+	Id      uint   `gorm:"primaryKey;autoIncrement"`
 	Email    string `gorm:"size:255;uniqueIndex"`
 	Password string `gorm:"size:255"`
+	Status   int    `gorm:"type:tinyint(11);not null"`
 }
 
-func NewUser(uid uint, email string, password string) *User {
+func NewUser(id uint, email, password string, status int) *User {
 	return &User{
-		Uid:      uid,
+		Id:       id,
 		Email:    email,
 		Password: password,
+		Status:   status,
 	}
 }
