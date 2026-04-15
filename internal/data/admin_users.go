@@ -24,7 +24,7 @@ func (AdminUser) TableName() string {
 	return "admin_users"
 }
 
-func NewRepoImpl(db *DB) *AdminUserRepoImpl {
+func NewAdminUserRepoImpl(db *DB) *AdminUserRepoImpl {
 	return &AdminUserRepoImpl{
 		db: db,
 	}

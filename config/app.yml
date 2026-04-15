@@ -15,5 +15,5 @@ cache:
   db: 0
 db:
   driver: "mysql"
-  dsn: "mini-blog:NWAxiiYFbHFzeaxC@tcp(124.223.90.6:3333)/mini-blog?charset=utf8mb4&parseTime=True&loc=Local"
+  dsn: "mini-blog:HMdkNy24PbtwSaNP@tcp(124.223.90.6:3333)/mini-blog?charset=utf8mb4&parseTime=True&loc=Local"
   # dsn: "root:123456@tcp(127.0.0.1:3306)/mini-blog?charset=utf8mb4&parseTime=True&loc=Local"

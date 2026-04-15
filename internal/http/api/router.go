@@ -4,10 +4,13 @@ import (
 	"github.com/hhhhkkk/mini-blog/router"
 )
 
-func NewApiRouterProvider() router.IRouterGroup {
+func NewApiRouterProvider(user *UserController) router.IRouterGroup {
 	apiRG := router.NewRouterGroup("api")
 
-	apiRG.AddRouter(router.NewGetRouter("/health", Health))
+	users := apiRG.NewSubGroup("/users")
+	{
+		users.AddRouter(router.NewPostRouter("/register", user.Register))
+	}
 
 	return apiRG
 }
