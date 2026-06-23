@@ -100,5 +100,6 @@ func (app *App) Run() error {
 		return nil
 	})
 	// todo job
+	// g.Go()
 	return g.Wait()
 }

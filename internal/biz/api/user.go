@@ -44,9 +44,8 @@ func (u *UserBiz) CreateUserByEmail(en *entity.UserEntity) (*entity.UserEntity, 
 			InvitedUid: user.Id,
 			InviteUid:  inviteUser.Id,
 		})
-		if err != nil {
-			// log
-		}
+		// if err != nil {
+		// }
 	}
 	return user, nil
 }

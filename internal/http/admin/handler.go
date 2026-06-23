@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 )
 
 var Health gin.HandlerFunc = func(ctx *gin.Context) {
@@ -17,13 +16,13 @@ var DemoPanic gin.HandlerFunc = func(ctx *gin.Context) {
 	panic("demo panic")
 }
 
-var appMiddleware gin.HandlerFunc = func(ctx *gin.Context) {
-	_, exists := ctx.Get("app")
-	if !exists {
-		ctx.Abort()
-	}
+// var appMiddleware gin.HandlerFunc = func(ctx *gin.Context) {
+// 	_, exists := ctx.Get("app")
+// 	if !exists {
+// 		ctx.Abort()
+// 	}
 
-	logger := zap.NewNop()
-	logger.Info("logggggggg")
-	ctx.JSON(http.StatusOK, gin.H{"msg": "logged"})
-}
+// 	logger := zap.NewNop()
+// 	logger.Info("logggggggg")
+// 	ctx.JSON(http.StatusOK, gin.H{"msg": "logged"})
+// }
