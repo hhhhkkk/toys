@@ -1,13 +1,20 @@
 package main
 
-import "github.com/hhhhkkk/mini-blog/internal"
+import (
+	"github.com/hhhhkkk/mini-blog/v1/cmd/attach"
+	"golang.org/x/sync/errgroup"
+)
+
+var g errgroup.Group
 
 func main() {
-	app, err := internal.InitApp()
-	if err != nil {
-		panic("服务生成失败...")
-	}
-	if err := app.Run(); err != nil {
-		panic("start error")
-	}
+	// v1
+	g.Go(func() error {
+		return attach.Run()
+	})
+
+	// v2
+	// g.Go(func() error {})
+
+	g.Wait()
 }
