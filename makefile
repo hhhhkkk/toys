@@ -11,3 +11,5 @@ rrv1:
 
 rr:
 	go run -race ./cmd
+wirev2:
+	wire ./v2/internal
