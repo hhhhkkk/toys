@@ -5,17 +5,17 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"github.com/hhhhkkk/mini-blog/v2/internal/app"
+	"github.com/hhhhkkk/mini-blog/v2/internal/router"
 )
 
 var START_ERROR = errors.New("gin 启动失败")
 
 type App struct {
 	engine *gin.Engine
-	router *app.Router
+	router *router.Router
 }
 
-func NewApp(engine *gin.Engine, router *app.Router) *App {
+func NewApp(engine *gin.Engine, router *router.Router) *App {
 	return &App{
 		engine: engine,
 		router: router,

@@ -4,18 +4,26 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hhhhkkk/mini-blog/v2/internal/app"
 )
 
-type Router struct{}
+type Router struct {
+	appService *app.AppService
+}
 
-func NewRouter() *Router {
-	return &Router{}
+func NewRouter(appService *app.AppService) *Router {
+	return &Router{
+		appService: appService,
+	}
 }
 
 func (r *Router) Register(engine *gin.Engine) {
 	g := engine.Group("/app")
+	g.GET("health", Health)
+
+	tg := g.Group("/task")
 	{
-		g.GET("health", Health)
+		tg.POST("", r.appService.CreateTask)
 	}
 }
 

@@ -15,7 +15,7 @@ func NewEngine() *gin.Engine {
 	return gin.Default()
 }
 
-var Provider = wire.NewSet(NewEngine, NewApp, app.ProviderSet, router.Provider)
+var Provider = wire.NewSet(NewEngine, NewApp, app.ProviderSet, router.ProviderSet)
 
 func InitApp() (*App, error) {
 	wire.Build(Provider)

@@ -10,14 +10,16 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
 	"github.com/hhhhkkk/mini-blog/v2/internal/app"
+	"github.com/hhhhkkk/mini-blog/v2/internal/router"
 )
 
 // Injectors from provider.go:
 
 func InitApp() (*App, error) {
 	engine := NewEngine()
-	router := app.NewRouter()
-	internalApp := NewApp(engine, router)
+	appService := app.NewAppService()
+	routerRouter := router.NewRouter(appService)
+	internalApp := NewApp(engine, routerRouter)
 	return internalApp, nil
 }
 
@@ -27,4 +29,4 @@ func NewEngine() *gin.Engine {
 	return gin.Default()
 }
 
-var Provider = wire.NewSet(NewEngine, NewApp, app.ProviderSet)
+var Provider = wire.NewSet(NewEngine, NewApp, app.ProviderSet, router.ProviderSet)
