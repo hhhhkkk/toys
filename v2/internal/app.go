@@ -5,22 +5,28 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hhhhkkk/mini-blog/v2/internal/app"
 )
 
 var START_ERROR = errors.New("gin 启动失败")
 
 type App struct {
 	engine *gin.Engine
+	router *app.Router
 }
 
-func NewApp(engine *gin.Engine) *App {
+func NewApp(engine *gin.Engine, router *app.Router) *App {
 	return &App{
 		engine: engine,
+		router: router,
 	}
 }
 
 func (app *App) Run() error {
 	fmt.Println("v2 starting...")
+
+	app.router.Register(app.engine)
+
 	if err := app.engine.Run(":8081"); err != nil {
 		return START_ERROR
 	}

@@ -9,14 +9,16 @@ package internal
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
+	"github.com/hhhhkkk/mini-blog/v2/internal/app"
 )
 
 // Injectors from provider.go:
 
 func InitApp() (*App, error) {
 	engine := NewEngine()
-	app := NewApp(engine)
-	return app, nil
+	router := app.NewRouter()
+	internalApp := NewApp(engine, router)
+	return internalApp, nil
 }
 
 // provider.go:
@@ -25,4 +27,4 @@ func NewEngine() *gin.Engine {
 	return gin.Default()
 }
 
-var Provider = wire.NewSet(NewEngine, NewApp)
+var Provider = wire.NewSet(NewEngine, NewApp, app.ProviderSet)
