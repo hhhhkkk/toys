@@ -12,9 +12,9 @@ func NewEngine() *gin.Engine {
 	return gin.Default()
 }
 
-var Provider = wire.NewSet(NewEngine)
+var Provider = wire.NewSet(NewEngine, NewApp)
 
 func InitApp() (*App, error) {
-	wire.Build()
+	wire.Build(Provider)
 	return nil, nil
 }
