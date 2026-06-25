@@ -5,15 +5,18 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/hhhhkkk/mini-blog/v2/internal/app"
+	"github.com/hhhhkkk/mini-blog/v2/internal/cache"
 )
 
 type Router struct {
-	appService *app.AppService
+	appService   *app.AppService
+	cacheService *cache.CacheService
 }
 
-func NewRouter(appService *app.AppService) *Router {
+func NewRouter(appService *app.AppService, cacheService *cache.CacheService) *Router {
 	return &Router{
-		appService: appService,
+		appService:   appService,
+		cacheService: cacheService,
 	}
 }
 
@@ -24,6 +27,13 @@ func (r *Router) Register(engine *gin.Engine) {
 	tg := g.Group("/task")
 	{
 		tg.POST("", r.appService.CreateTask)
+	}
+
+	cg := g.Group("cache")
+	{
+		cg.POST("", r.cacheService.Add)
+		cg.DELETE("/:key", r.cacheService.Del)
+		cg.GET("/:key", r.cacheService.Get)
 	}
 }
 

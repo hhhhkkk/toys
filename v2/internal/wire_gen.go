@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
 	"github.com/hhhhkkk/mini-blog/v2/internal/app"
+	"github.com/hhhhkkk/mini-blog/v2/internal/cache"
 	"github.com/hhhhkkk/mini-blog/v2/internal/router"
 )
 
@@ -18,7 +19,8 @@ import (
 func InitApp() (*App, error) {
 	engine := NewEngine()
 	appService := app.NewAppService()
-	routerRouter := router.NewRouter(appService)
+	cacheService := cache.NewCacheService()
+	routerRouter := router.NewRouter(appService, cacheService)
 	internalApp := NewApp(engine, routerRouter)
 	return internalApp, nil
 }
@@ -29,4 +31,4 @@ func NewEngine() *gin.Engine {
 	return gin.Default()
 }
 
-var Provider = wire.NewSet(NewEngine, NewApp, app.ProviderSet, router.ProviderSet)
+var Provider = wire.NewSet(NewEngine, NewApp, app.ProviderSet, router.ProviderSet, cache.ProviderSet)
