@@ -1,4 +1,4 @@
-package strategy
+package expoired_strategy
 
 import (
 	"sync"
