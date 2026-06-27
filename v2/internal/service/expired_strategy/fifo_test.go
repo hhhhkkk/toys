@@ -1,4 +1,4 @@
-package expoired_strategy
+package expired_strategy
 
 import (
 	"sync"
