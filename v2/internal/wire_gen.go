@@ -19,7 +19,8 @@ import (
 func InitApp() (*App, error) {
 	engine := NewEngine()
 	appService := app.NewAppService()
-	cacheService := cache.NewCacheService()
+	iExpiredStrategy := cache.ProvideLRU()
+	cacheService := cache.NewCacheService(iExpiredStrategy)
 	routerRouter := router.NewRouter(appService, cacheService)
 	internalApp := NewApp(engine, routerRouter)
 	return internalApp, nil

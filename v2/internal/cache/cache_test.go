@@ -3,11 +3,18 @@ package cache
 import (
 	"sync"
 	"testing"
+
+	"github.com/hhhhkkk/mini-blog/v2/internal/service/expired_strategy"
 )
+
+func defaultService() *CacheService {
+	defaultExpiredStrategy := expired_strategy.NewFifo(8)
+	return NewCacheService(defaultExpiredStrategy)
+}
 
 // TestAdd 测试 add 函数
 func TestAdd(t *testing.T) {
-	cs := NewCacheService()
+	cs := defaultService()
 	key := "testKey"
 	node := &Node{Value: "testValue", Size: 9}
 
@@ -28,7 +35,7 @@ func TestAdd(t *testing.T) {
 
 // TestRemove 测试 remove 函数
 func TestRemove(t *testing.T) {
-	cs := NewCacheService()
+	cs := defaultService()
 	key := "testKey"
 	node := &Node{Value: "testValue", Size: 9}
 
@@ -48,7 +55,8 @@ func TestRemove(t *testing.T) {
 // TestAddRemoveConcurrency 并发测试，检测数据竞争
 // 使用 go test -race 运行以验证锁的正确性
 func TestAddRemoveConcurrency(t *testing.T) {
-	cs := NewCacheService()
+
+	cs := defaultService()
 	const goroutines = 50
 	const iterations = 100
 	var wg sync.WaitGroup

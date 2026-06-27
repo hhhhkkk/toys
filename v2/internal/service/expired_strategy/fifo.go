@@ -12,6 +12,8 @@ type Fifo struct {
 	lock   sync.Mutex
 }
 
+var _ IExpiredStrategy = (*Fifo)(nil)
+
 func NewFifo(l int) *Fifo {
 	if l <= 0 {
 		panic("FIFO not support max_len = 0.")

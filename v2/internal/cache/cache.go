@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hhhhkkk/mini-blog/v2/internal/service/expired_strategy"
 )
 
 type Node struct {
@@ -13,14 +14,16 @@ type Node struct {
 }
 
 type CacheService struct {
-	lock sync.RWMutex
-	data map[string]*Node
+	lock            sync.RWMutex
+	data            map[string]*Node
+	expiredStrategy expired_strategy.IExpiredStrategy
 }
 
-func NewCacheService() *CacheService {
+func NewCacheService(st expired_strategy.IExpiredStrategy) *CacheService {
 	return &CacheService{
-		lock: sync.RWMutex{},
-		data: make(map[string]*Node),
+		lock:            sync.RWMutex{},
+		data:            make(map[string]*Node),
+		expiredStrategy: st,
 	}
 }
 
@@ -46,6 +49,12 @@ func (c *CacheService) Add(ctx *gin.Context) {
 		Size:  len(dto.Value),
 	}
 	add(c, dto.Key, node)
+
+	if k, ok := c.expiredStrategy.Push(dto.Value); ok {
+		remove(c, k)
+		return
+	}
+
 	ctx.JSON(http.StatusNoContent, "")
 }
 
@@ -54,15 +63,6 @@ type GetDto struct {
 }
 
 func (c *CacheService) Get(ctx *gin.Context) {
-	// dto := &GetDto{}
-	// if err := ctx.ShouldBindBodyWithJSON(dto); err != nil {
-	// 	ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "params is invalid."})
-	// 	return
-	// }
-	// if dto.Key == "" {
-	// 	ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "key can't be empty string."})
-	// 	return
-	// }
 
 	key := ctx.Param("key")
 	if key == "" {

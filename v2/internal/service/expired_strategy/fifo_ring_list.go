@@ -4,6 +4,8 @@ import (
 	"sync"
 )
 
+var _ IExpiredStrategy = (*FifoRingList)(nil)
+
 // FifoRingList 利用固定长度数组， 只移动下标，减少 append 分片的操作
 type FifoRingList struct {
 	maxLen int

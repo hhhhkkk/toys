@@ -5,166 +5,19 @@ import (
 	"testing"
 )
 
-// 辅助函数：从链表头开始遍历，返回所有节点的值（用于验证顺序）
+// 辅助函数：从链表头开始遍历，返回所有节点的值（用于验证链表顺序）
 func listValues(l *LRU) []string {
 	if l.node == nil {
 		return []string{}
 	}
-	values := []string{l.node.value}
+	vals := []string{l.node.value}
 	for cur := l.node.next; cur != l.node; cur = cur.next {
-		values = append(values, cur.value)
+		vals = append(vals, cur.value)
 	}
-	return values
+	return vals
 }
 
-// 测试 Push：验证尾部插入和链表顺序
-func TestLRU_Push(t *testing.T) {
-	lru := NewLRU()
-
-	// 空链表 Push
-	lru.Push("A")
-	if got := listValues(lru); !equalSlice(got, []string{"A"}) {
-		t.Errorf("Push A, got %v, want [A]", got)
-	}
-
-	// 继续 Push
-	lru.Push("B")
-	lru.Push("C")
-	if got := listValues(lru); !equalSlice(got, []string{"A", "B", "C"}) {
-		t.Errorf("Push A,B,C, got %v, want [A B C]", got)
-	}
-
-	// 验证循环链接：尾节点的 next 指向头，头节点的 prev 指向尾
-	head := lru.node
-	tail := head.prev
-	if tail.next != head {
-		t.Errorf("tail.next not head")
-	}
-	if head.prev != tail {
-		t.Errorf("head.prev not tail")
-	}
-}
-
-// 测试 Pop：弹出尾部元素，验证返回值及链表状态
-func TestLRU_Pop(t *testing.T) {
-	lru := NewLRU()
-	lru.Push("A")
-	lru.Push("B")
-	lru.Push("C")
-
-	// 正常弹出
-	got := lru.Pop(2)
-	if !equalSlice(got, []string{"C", "B"}) {
-		t.Errorf("Pop 2, got %v, want [C B]", got)
-	}
-	if got := listValues(lru); !equalSlice(got, []string{"A"}) {
-		t.Errorf("after Pop 2, list got %v, want [A]", got)
-	}
-
-	// 弹出最后一个
-	got = lru.Pop(1)
-	if !equalSlice(got, []string{"A"}) {
-		t.Errorf("Pop 1, got %v, want [A]", got)
-	}
-	if lru.node != nil {
-		t.Errorf("list should be empty, but node not nil")
-	}
-
-	// 空链表 Pop 应返回空切片
-	got = lru.Pop(2)
-	if len(got) != 0 {
-		t.Errorf("Pop on empty, got %v, want []", got)
-	}
-
-	// Pop 数量大于实际节点数：应返回所有节点
-	lru.Push("X")
-	lru.Push("Y")
-	got = lru.Pop(5)
-	if !equalSlice(got, []string{"Y", "X"}) {
-		t.Errorf("Pop 5 from [X,Y], got %v, want [Y X]", got)
-	}
-	if lru.node != nil {
-		t.Errorf("list should be empty after Pop all")
-	}
-}
-
-// 测试 MoveToHead：将节点移到头部
-func TestLRU_MoveToHead(t *testing.T) {
-	lru := NewLRU()
-	lru.Push("A")
-	lru.Push("B")
-	lru.Push("C") // 链表: A -> B -> C
-
-	// 移动中间节点 B 到头部
-	// 需要先获取 B 节点的指针（这里通过遍历模拟，实际使用需暴露，但在测试中我们通过 node 指针操作）
-	// 由于 entity 未导出，我们只能通过内部方法测试。下面我们直接使用已知指针。
-	// 更好的办法：在测试中通过 lru.node.next 获取 B，但 entity 未导出，我们可以在内部写一个 getNode 辅助。
-	// 为了演示，我们直接通过 lru.node.next 获取 B（因为 B 是第二个节点）
-	b := lru.node.next
-	lru.MoveToHead(b)
-
-	if got := listValues(lru); !equalSlice(got, []string{"B", "A", "C"}) {
-		t.Errorf("MoveToHead B, got %v, want [B A C]", got)
-	}
-
-	// 移动头节点（无变化）
-	lru.MoveToHead(lru.node)
-	if got := listValues(lru); !equalSlice(got, []string{"B", "A", "C"}) {
-		t.Errorf("MoveToHead head, got %v, want [B A C]", got)
-	}
-
-	// 移动尾节点 C 到头部
-	c := lru.node.prev
-	lru.MoveToHead(c)
-	if got := listValues(lru); !equalSlice(got, []string{"C", "B", "A"}) {
-		t.Errorf("MoveToHead C, got %v, want [C B A]", got)
-	}
-}
-
-// 测试并发安全性：多个 goroutine 同时 Push 和 Pop
-func TestLRU_Concurrency(t *testing.T) {
-	lru := NewLRU()
-	var wg sync.WaitGroup
-	ops := 100
-
-	// 并发 Push
-	for i := 0; i < ops; i++ {
-		wg.Add(1)
-		go func(v string) {
-			defer wg.Done()
-			lru.Push(v)
-		}(string(rune('A' + i%26))) // 循环使用字母
-	}
-
-	// 并发 Pop（部分）
-	for i := 0; i < ops/2; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			_ = lru.Pop(1)
-		}()
-	}
-
-	wg.Wait()
-
-	// 最终链表应该不为 nil（因为我们 push 了 100 个，pop 了 50 个）
-	if lru.node == nil {
-		t.Log("链表为空，可能 pop 过多，但并发场景允许")
-	} else {
-		// 检查链表是否循环且无断链
-		head := lru.node
-		visited := 0
-		for cur := head; visited == 0 || cur != head; cur = cur.next {
-			visited++
-			if visited > 1000 { // 防止死循环
-				t.Errorf("链表可能形成环，检查失败")
-				break
-			}
-		}
-	}
-}
-
-// 辅助函数：比较两个字符串切片是否相等
+// 辅助：比较两个字符串切片是否相等（忽略顺序仅用于长度或内容）
 func equalSlice(a, b []string) bool {
 	if len(a) != len(b) {
 		return false
@@ -175,4 +28,247 @@ func equalSlice(a, b []string) bool {
 		}
 	}
 	return true
+}
+
+func TestLRU_EMPTY_POP(t *testing.T) {
+	lru := NewLRU(3)
+	for i := 0; i < 100; i++ {
+		_, ok := lru.Pop()
+		if ok {
+			t.Error("empty lru pop ok")
+		}
+	}
+}
+
+// 测试 Push 基本插入（无淘汰）
+func TestLRU_Push_Basic(t *testing.T) {
+	lru := NewLRU(3)
+	evicted, ok := lru.Push("A")
+	if ok || evicted != "" {
+		t.Errorf("Push A expected no eviction, got evicted=%q, ok=%v", evicted, ok)
+	}
+	// 链表应为 [A]
+	if got := listValues(lru); !equalSlice(got, []string{"A"}) {
+		t.Errorf("list = %v, want [A]", got)
+	}
+
+	lru.Push("B")
+	lru.Push("C")
+	// 链表应为 [C, B, A]（新插入在头部）
+	if got := listValues(lru); !equalSlice(got, []string{"C", "B", "A"}) {
+		t.Errorf("list = %v, want [C, B, A]", got)
+	}
+
+	if lru.Len() != 3 {
+		t.Errorf("Len = %d, want 3", lru.Len())
+	}
+}
+
+// 测试 Push 触发容量淘汰（淘汰尾部最久未使用）
+func TestLRU_Push_Eviction(t *testing.T) {
+	lru := NewLRU(2)
+	lru.Push("A") // [A]
+	lru.Push("B") // [B, A]
+
+	// 插入 C，容量 2，应淘汰尾部 A
+	evicted, ok := lru.Push("C")
+	if !ok || evicted != "A" {
+		t.Errorf("Push C expected evict A, got evicted=%q, ok=%v", evicted, ok)
+	}
+	if got := listValues(lru); !equalSlice(got, []string{"C", "B"}) {
+		t.Errorf("after eviction list = %v, want [C, B]", got)
+	}
+	if lru.Len() != 2 {
+		t.Errorf("Len = %d, want 2", lru.Len())
+	}
+
+	// 继续插入 D，淘汰 B
+	evicted, ok = lru.Push("D")
+	if !ok || evicted != "B" {
+		t.Errorf("Push D expected evict B, got evicted=%q, ok=%v", evicted, ok)
+	}
+	if got := listValues(lru); !equalSlice(got, []string{"D", "C"}) {
+		t.Errorf("after eviction list = %v, want [D, C]", got)
+	}
+}
+
+// 测试 Push 容量为 1 的极端情况
+func TestLRU_Push_CapacityOne(t *testing.T) {
+	lru := NewLRU(1)
+	evicted, ok := lru.Push("A")
+	if ok {
+		t.Errorf("expected no eviction, got evicted")
+	}
+	// 再次 Push 应淘汰 A
+	evicted, ok = lru.Push("B")
+	if !ok || evicted != "A" {
+		t.Errorf("expected evict A, got %q", evicted)
+	}
+	if got := listValues(lru); !equalSlice(got, []string{"B"}) {
+		t.Errorf("list = %v, want [B]", got)
+	}
+	if lru.Len() != 1 {
+		t.Errorf("Len = %d, want 1", lru.Len())
+	}
+}
+
+// 测试 Pop 基本功能（弹出尾部）
+func TestLRU_Pop_Basic(t *testing.T) {
+	lru := NewLRU(5)
+	lru.Push("A")
+	lru.Push("B")
+	lru.Push("C") // [C, B, A]
+
+	val, ok := lru.Pop()
+	if !ok || val != "A" {
+		t.Errorf("Pop got %q, %v, want 'A', true", val, ok)
+	}
+	if got := listValues(lru); !equalSlice(got, []string{"C", "B"}) {
+		t.Errorf("after Pop list = %v, want [C, B]", got)
+	}
+	if lru.Len() != 2 {
+		t.Errorf("Len = %d, want 2", lru.Len())
+	}
+
+	// 继续 Pop 直到空
+	lru.Pop()
+	lru.Pop()
+	if lru.Len() != 0 {
+		t.Errorf("Len should be 0, got %d", lru.Len())
+	}
+	if lru.node != nil {
+		t.Errorf("node should be nil")
+	}
+
+	// 空链表 Pop
+	val, ok = lru.Pop()
+	if ok || val != "" {
+		t.Errorf("Pop on empty got %q, %v, want '', false", val, ok)
+	}
+}
+
+// 测试 Pop 与 Push 混合操作，验证 LRU 顺序正确
+func TestLRU_PushPop_Mixed(t *testing.T) {
+	lru := NewLRU(3)
+	lru.Push("A")
+	lru.Push("B")
+	lru.Push("C") // [C, B, A]
+
+	// 手动 Pop 掉 A（尾部）
+	lru.Pop() // 弹出 A
+	// 当前 [C, B]
+	if got := listValues(lru); !equalSlice(got, []string{"C", "B"}) {
+		t.Errorf("after pop list = %v, want [C, B]", got)
+	}
+
+	// 再 Push D，容量 3，当前长度 2，不会淘汰
+	evicted, ok := lru.Push("D")
+	if ok {
+		t.Errorf("expected no eviction, got evicted %q", evicted)
+	}
+	// 链表应为 [D, C, B]
+	if got := listValues(lru); !equalSlice(got, []string{"D", "C", "B"}) {
+		t.Errorf("after Push D list = %v, want [D, C, B]", got)
+	}
+
+	// 现在长度=3，Push E 会触发淘汰，淘汰尾部 B
+	evicted, ok = lru.Push("E")
+	if !ok || evicted != "B" {
+		t.Errorf("Push E expected evict B, got %q, ok=%v", evicted, ok)
+	}
+	// 链表应为 [E, D, C]（因为淘汰了尾部的 B）
+	if got := listValues(lru); !equalSlice(got, []string{"E", "D", "C"}) {
+		t.Errorf("after Push E list = %v, want [E, D, C]", got)
+	}
+
+	// 再 Push F，当前长度=3，又触发淘汰，淘汰尾部 C
+	evicted, ok = lru.Push("F")
+	if !ok || evicted != "C" {
+		t.Errorf("Push F expected evict C, got %q, ok=%v", evicted, ok)
+	}
+	// 最终链表应为 [F, E, D]
+	if got := listValues(lru); !equalSlice(got, []string{"F", "E", "D"}) {
+		t.Errorf("final list = %v, want [F, E, D]", got)
+	}
+}
+
+// 测试并发安全：多个 goroutine 同时 Push 和 Pop
+func TestLRU_Concurrency(t *testing.T) {
+	lru := NewLRU(10)
+	var wg sync.WaitGroup
+	const goroutines = 10
+	const opsPerGoroutine = 100
+
+	for i := 0; i < goroutines; i++ {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			base := string(rune('A' + id))
+			for j := 0; j < opsPerGoroutine; j++ {
+				// 交替 Push 和 Pop
+				if j%2 == 0 {
+					lru.Push(base + string(rune('a'+j%26)))
+				} else {
+					lru.Pop()
+				}
+			}
+		}(i)
+	}
+	wg.Wait()
+
+	// 最终链表可能非空，但应保持循环结构且无 nil 指针
+	if lru.node != nil {
+		// 遍历检查循环完整性
+		head := lru.node
+		visited := 0
+		cur := head
+		for {
+			visited++
+			if visited > 10000 { // 防无限循环
+				t.Errorf("possible cycle detected, visited > 10000")
+				break
+			}
+			if cur.next == nil || cur.prev == nil {
+				t.Errorf("nil pointer in linked list")
+				break
+			}
+			cur = cur.next
+			if cur == head {
+				break
+			}
+		}
+		// Len 应不大于 maxLen
+		if lru.Len() > lru.maxLen {
+			t.Errorf("Len = %d > maxLen %d", lru.Len(), lru.maxLen)
+		}
+	}
+}
+
+// 测试 Len 方法在并发环境下的正确性（仅读取）
+func TestLRU_LenConcurrency(t *testing.T) {
+	lru := NewLRU(5)
+	var wg sync.WaitGroup
+	for i := 0; i < 100; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			lru.Push("x")
+			_ = lru.Len()
+		}()
+	}
+	wg.Wait()
+	// 最终长度应不超过5
+	if lru.Len() > 5 {
+		t.Errorf("Len = %d > 5", lru.Len())
+	}
+}
+
+// 测试 NewLRU 传入非法容量（<=0）应 panic
+func TestNewLRU_InvalidCapacity(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("expected panic for maxLen<=0")
+		}
+	}()
+	NewLRU(0)
 }
