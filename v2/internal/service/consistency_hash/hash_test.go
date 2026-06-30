@@ -9,14 +9,20 @@ import (
 
 // 1. 基础功能测试：添加节点后，环的长度是否正确
 func TestAddNode(t *testing.T) {
-	h := New(5) // 每个节点 5 个虚拟节点
-	h.AddNode("server1")
+	h := New() // 每个节点 5 个虚拟节点
+	h.AddNode(Config{
+		NodeName: "server1",
+		Replica:  5,
+	})
 
 	if len(h.ring) != 5 {
 		t.Errorf("ring length = %d, expected %d", len(h.ring), 5)
 	}
 
-	h.AddNode("server2")
+	h.AddNode(Config{
+		NodeName: "server2",
+		Replica:  5,
+	})
 	if len(h.ring) != 10 {
 		t.Errorf("ring length = %d, expected %d", len(h.ring), 10)
 	}
@@ -24,10 +30,23 @@ func TestAddNode(t *testing.T) {
 
 // 2. 核心功能测试：相同的 Key 永远指向同一个节点（确定性）
 func TestGetNodeConsistency(t *testing.T) {
-	h := New(10)
-	h.AddNode("A")
-	h.AddNode("B")
-	h.AddNode("C")
+	// h := New(10)
+	// h.AddNode("A")
+	// h.AddNode("B")
+	// h.AddNode("C")
+	h := New()
+	h.AddNode(Config{
+		NodeName: "A",
+		Replica:  10,
+	})
+	h.AddNode(Config{
+		NodeName: "B",
+		Replica:  10,
+	})
+	h.AddNode(Config{
+		NodeName: "C",
+		Replica:  10,
+	})
 
 	key := "user_12345"
 	node1 := h.Get(key)
@@ -43,8 +62,8 @@ func TestGetNodeConsistency(t *testing.T) {
 
 // 3. 均匀性测试（负载均衡）：验证 10000 个 Key 的分布偏差 < 20%
 func TestDistribution(t *testing.T) {
-	h := New(160) // 虚拟节点多一点，分布更均匀
-	nodes := []string{"Node-A", "Node-B", "Node-C"}
+	h := New() // 虚拟节点多一点，分布更均匀
+	nodes := []Config{Config{NodeName: "Node-A", Replica: 160}, Config{NodeName: "Node-B", Replica: 160}, Config{NodeName: "Node-C", Replica: 160}}
 	for _, n := range nodes {
 		h.AddNode(n)
 	}
@@ -64,23 +83,33 @@ func TestDistribution(t *testing.T) {
 	tolerance := float64(expected) * 0.2 // 允许 20% 波动
 
 	for _, node := range nodes {
-		actual := counts[node]
+		actual := counts[node.NodeName]
 		diff := float64(actual - expected)
 		if diff < 0 {
 			diff = -diff
 		}
 		if diff > tolerance {
 			t.Errorf("Distribution imbalance: node %s got %d, expected ~%d (diff %.2f%%)",
-				node, actual, expected, (diff/float64(expected))*100)
+				node.NodeName, actual, expected, (diff/float64(expected))*100)
 		}
 	}
 }
 
 // 4. 添加新节点后，数据迁移量应低于 1/N（一致性哈希的核心优势）
 func TestMigrationRate(t *testing.T) {
-	h := New(50)
-	h.AddNode("Old1")
-	h.AddNode("Old2")
+	// h := New(50)
+	// h.AddNode("Old1")
+	// h.AddNode("Old2")
+
+	h := New()
+	h.AddNode(Config{
+		NodeName: "Old1",
+		Replica:  100,
+	})
+	h.AddNode(Config{
+		NodeName: "Old2",
+		Replica:  100,
+	})
 
 	// 记录旧环下 1000 个 Key 的归属
 	oldMap := make(map[string]string)
@@ -92,7 +121,11 @@ func TestMigrationRate(t *testing.T) {
 	}
 
 	// 新增一台机器
-	h.AddNode("New3")
+	// h.AddNode("New3")
+	h.AddNode(Config{
+		NodeName: "New3",
+		Replica:  100,
+	})
 
 	// 计算需要搬家的比例
 	moved := 0
@@ -112,7 +145,7 @@ func TestMigrationRate(t *testing.T) {
 
 // 5. 并发安全测试（必须启用 race detector）
 func TestConcurrentAccess(t *testing.T) {
-	h := New(10)
+	h := New()
 
 	var wg sync.WaitGroup
 	wg.Add(20)
@@ -121,7 +154,11 @@ func TestConcurrentAccess(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		go func(idx int) {
 			defer wg.Done()
-			h.AddNode(fmt.Sprintf("writer_%d", idx))
+			h.AddNode(
+				Config{
+					NodeName: fmt.Sprintf("writer_%d", idx),
+					Replica:  3,
+				})
 		}(i)
 	}
 
@@ -142,7 +179,7 @@ func TestConcurrentAccess(t *testing.T) {
 
 // 6. 边缘测试：空环
 func TestEmptyRing(t *testing.T) {
-	h := New(10)
+	h := New()
 	// 没有添加任何节点
 	result := h.Get("any_key")
 	if result != "" {

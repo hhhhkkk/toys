@@ -14,6 +14,7 @@ import (
 	"github.com/hhhhkkk/mini-blog/v2/internal/cache"
 	"github.com/hhhhkkk/mini-blog/v2/internal/router"
 	"github.com/hhhhkkk/mini-blog/v2/internal/service"
+	"github.com/hhhhkkk/mini-blog/v2/internal/service/consistency_hash"
 	"github.com/hhhhkkk/mini-blog/v2/internal/service/expired_strategy"
 )
 
@@ -25,7 +26,8 @@ func InitApp() (*App, error) {
 	configConfig := config.New()
 	expiredConfig := config.NewExpiredConfig(configConfig)
 	iExpiredStrategy := expired_strategy.NewExpiredStrategyImpl(expiredConfig)
-	cacheService := cache.NewCacheService(iExpiredStrategy)
+	myHash := consistencyhash.New()
+	cacheService := cache.NewCacheService(iExpiredStrategy, myHash)
 	routerRouter := router.NewRouter(appService, cacheService)
 	internalApp := NewApp(engine, routerRouter)
 	return internalApp, nil

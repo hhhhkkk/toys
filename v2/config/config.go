@@ -33,8 +33,10 @@ type Config struct {
 func New() Config {
 	confReader := viper.New()
 	confReader.AddConfigPath("./../v2/config")
+	confReader.AddConfigPath("./../v2/config")
 	confReader.AddConfigPath("./../config")
 	confReader.AddConfigPath("./config")
+	confReader.AddConfigPath("./v2/config")
 	confReader.SetConfigType("yml")
 	confReader.SetConfigName("config")
 

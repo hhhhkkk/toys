@@ -22,12 +22,17 @@ func NewApp(engine *gin.Engine, router *router.Router) *App {
 	}
 }
 
-func (app *App) Run() error {
+func (app *App) Run(port ...int) error {
 	fmt.Println("v2 starting...")
 
 	app.router.Register(app.engine)
 
-	if err := app.engine.Run(":8081"); err != nil {
+	listen := 8081
+	if len(port) > 0 {
+		listen = port[0]
+	}
+
+	if err := app.engine.Run(fmt.Sprintf(":%d", listen)); err != nil {
 		return START_ERROR
 	}
 	return nil

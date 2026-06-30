@@ -4,12 +4,14 @@ import (
 	"sync"
 	"testing"
 
+	consistencyhash "github.com/hhhhkkk/mini-blog/v2/internal/service/consistency_hash"
 	"github.com/hhhhkkk/mini-blog/v2/internal/service/expired_strategy"
 )
 
 func defaultService() *CacheService {
 	defaultExpiredStrategy := expired_strategy.NewFifo(8)
-	return NewCacheService(defaultExpiredStrategy)
+	hash := consistencyhash.New()
+	return NewCacheService(defaultExpiredStrategy, hash)
 }
 
 // TestAdd 测试 add 函数

@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"hash/crc32"
 	"sort"
+	"strconv"
 	"sync"
+
+	"github.com/hhhhkkk/mini-blog/v2/pkg"
 )
 
 type Config struct {
@@ -30,6 +33,20 @@ func New() *MyHash {
 		ring:    []int{},
 		// Replicas: repeat,
 	}
+}
+
+func (h *MyHash) List() map[string][]string {
+
+	ret := make(map[string][]string)
+
+	ret["rings"] = pkg.MapSlice(h.ring, func(i int) string { return strconv.Itoa(i) })
+
+	ret["map"] = make([]string, 0)
+	for k, v := range h.nodeMap {
+		ret["map"] = append(ret["map"], fmt.Sprintf("%d - %s", k, v))
+	}
+
+	return ret
 }
 
 func (h *MyHash) AddNode(config Config) {
