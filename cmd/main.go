@@ -1,7 +1,8 @@
 package main
 
 import (
-	v2 "github.com/hhhhkkk/mini-blog/v2/cmd"
+	v1 "github.com/hhhhkkk/mini-blog/v1/cmd/attach"
+	v2 "github.com/hhhhkkk/mini-blog/v2/cmd/attach"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -9,9 +10,9 @@ var g errgroup.Group
 
 func main() {
 	// v1
-	// g.Go(func() error {
-	// 	return attach.Run()
-	// })
+	g.Go(func() error {
+		return v1.Run()
+	})
 
 	// v2
 	g.Go(func() error {
