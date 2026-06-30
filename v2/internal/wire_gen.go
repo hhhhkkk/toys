@@ -9,9 +9,12 @@ package internal
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
+	"github.com/hhhhkkk/mini-blog/v2/config"
 	"github.com/hhhhkkk/mini-blog/v2/internal/app"
 	"github.com/hhhhkkk/mini-blog/v2/internal/cache"
 	"github.com/hhhhkkk/mini-blog/v2/internal/router"
+	"github.com/hhhhkkk/mini-blog/v2/internal/service"
+	"github.com/hhhhkkk/mini-blog/v2/internal/service/expired_strategy"
 )
 
 // Injectors from provider.go:
@@ -19,7 +22,9 @@ import (
 func InitApp() (*App, error) {
 	engine := NewEngine()
 	appService := app.NewAppService()
-	iExpiredStrategy := cache.ProvideLRU()
+	configConfig := config.New()
+	expiredConfig := config.NewExpiredConfig(configConfig)
+	iExpiredStrategy := expired_strategy.NewExpiredStrategyImpl(expiredConfig)
 	cacheService := cache.NewCacheService(iExpiredStrategy)
 	routerRouter := router.NewRouter(appService, cacheService)
 	internalApp := NewApp(engine, routerRouter)
@@ -32,4 +37,4 @@ func NewEngine() *gin.Engine {
 	return gin.Default()
 }
 
-var Provider = wire.NewSet(NewEngine, NewApp, app.ProviderSet, router.ProviderSet, cache.ProviderSet)
+var Provider = wire.NewSet(NewEngine, NewApp, app.ProviderSet, router.ProviderSet, cache.ProviderSet, service.ProviderSet, config.ProviderSet)

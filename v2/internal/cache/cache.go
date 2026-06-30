@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
+	consistencyhash "github.com/hhhhkkk/mini-blog/v2/internal/service/consistency_hash"
 	"github.com/hhhhkkk/mini-blog/v2/internal/service/expired_strategy"
 )
 
@@ -14,17 +15,21 @@ type Node struct {
 }
 
 type CacheService struct {
-	lock            sync.RWMutex
-	data            map[string]*Node
+	lock sync.RWMutex
+	data map[string]*Node
+	// 主动过期算法，当前是 LRU
 	expiredStrategy expired_strategy.IExpiredStrategy
+	consistencyHash *consistencyhash.MyHash
 }
 
-func NewCacheService(st expired_strategy.IExpiredStrategy) *CacheService {
-	return &CacheService{
+func NewCacheService(st expired_strategy.IExpiredStrategy, hash *consistencyhash.MyHash) *CacheService {
+	srv := &CacheService{
 		lock:            sync.RWMutex{},
 		data:            make(map[string]*Node),
 		expiredStrategy: st,
+		consistencyHash: hash,
 	}
+	return srv
 }
 
 type AddDto struct {
@@ -44,11 +49,11 @@ func (c *CacheService) Add(ctx *gin.Context) {
 		return
 	}
 
-	node := &Node{
+	ValueNode := &Node{
 		Value: dto.Value,
 		Size:  len(dto.Value),
 	}
-	add(c, dto.Key, node)
+	add(c, dto.Key, ValueNode)
 
 	if k, ok := c.expiredStrategy.Push(dto.Value); ok {
 		remove(c, k)

@@ -7,33 +7,38 @@ import (
 	"sync"
 )
 
+type Config struct {
+	NodeName string
+	Replica  int
+}
+
 // Hash maps bytes to uint32
 type Hash func(data []byte) uint32
 
 type MyHash struct {
-	hash     Hash
-	ring     []int
-	nodeMap  map[int]string
-	Replicas uint
-	mu       sync.RWMutex
+	hash    Hash
+	ring    []int
+	nodeMap map[int]string
+	// Replicas uint
+	mu sync.RWMutex
 }
 
-func New(repeat uint) *MyHash {
+func New() *MyHash {
 	return &MyHash{
-		hash:     crc32.ChecksumIEEE,
-		nodeMap:  make(map[int]string),
-		ring:     []int{},
-		Replicas: repeat,
+		hash:    crc32.ChecksumIEEE,
+		nodeMap: make(map[int]string),
+		ring:    []int{},
+		// Replicas: repeat,
 	}
 }
 
-func (h *MyHash) AddNode(nodeName string) {
+func (h *MyHash) AddNode(config Config) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	for i := 0; i < int(h.Replicas); i++ {
-		key := fmt.Sprintf("node%s+%d", nodeName, i)
+	for i := 0; i < config.Replica; i++ {
+		key := fmt.Sprintf("node%s+%d", config.NodeName, i)
 		index := int(h.hash([]byte(key)))
-		h.nodeMap[index] = nodeName
+		h.nodeMap[index] = config.NodeName
 		h.ring = append(h.ring, index)
 	}
 
@@ -56,4 +61,20 @@ func (h *MyHash) Get(k string) string {
 	idx = idx % len(h.ring)
 
 	return h.nodeMap[h.ring[idx]]
+}
+
+func (h *MyHash) Remove(rn string) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	// 直接重建 ring， 这样就不用删除了
+	nRing := make([]int, 0)
+	for idx, v := range h.ring {
+		if h.nodeMap[v] != rn {
+			nRing = append(nRing, v)
+		} else {
+			delete(h.nodeMap, idx)
+		}
+	}
+	h.ring = nRing
 }

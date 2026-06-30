@@ -1,0 +1,17 @@
+appName: "v2"
+consistencyConfig:
+  name: "v2"
+  len: 10
+expireConfig:
+  name: "LRU"
+  len: 5
+replicas:
+  - name: "n1"
+    host: "127.0.0.1:8100"
+    fakerNum: 3
+  - name: "n2"
+    host: "127.0.0.1:8101"
+    fakerNum: 3
+  - name: "n3"
+    host: "127.0.0.1:8102"
+    fakerNum: 100
