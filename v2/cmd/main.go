@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -20,14 +23,14 @@ func main() {
 	for _, v := range appConf.HostList {
 		value := v
 		wg.Add(1)
-		go func(v config.Host) {
+		go func(vv config.Host) {
 
 			app, err := internal.InitApp()
 			if err != nil {
-				panic(fmt.Errorf("%s up failed", v.Name))
+				panic(fmt.Errorf("%s up failed", vv.Name))
 			}
 
-			parseHost := strings.Split(v.Host, ":")
+			parseHost := strings.Split(vv.Host, ":")
 			portS := parseHost[1]
 			port, _ := strconv.Atoi(portS)
 
@@ -38,7 +41,7 @@ func main() {
 			}
 
 			if err != nil {
-				panic(fmt.Errorf("%s up failed, cause: %s", v.Name, err.Error()))
+				panic(fmt.Errorf("%s up failed, cause: %s", vv.Name, err.Error()))
 			}
 			defer wg.Done()
 		}(value)
@@ -60,7 +63,33 @@ func main() {
 			key := ctx.Param("key")
 			name := hash.Get(key)
 
+			if name == "" {
+				ctx.JSON(http.StatusInternalServerError, gin.H{
+					"msg": "hash node is nil",
+				})
+				return
+			}
+
+			host := ""
+			for _, v := range appConf.HostList {
+				if v.Name == name {
+					host = v.Host
+					break
+				}
+			}
+
+			client := http.Client{}
+			resp, _ := client.Get(fmt.Sprintf("http://%s/app/cache/%s", host, key))
+			value, err := io.ReadAll(resp.Body)
+			defer resp.Body.Close()
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, gin.H{
+					"msg": "call api err" + err.Error(),
+				})
+				return
+			}
 			ctx.JSON(http.StatusOK, gin.H{
+				"value":  string(value),
 				"node":   name,
 				"key":    key,
 				"hashes": hash.List(),
@@ -80,8 +109,39 @@ func main() {
 			}
 
 			name := hash.Get(dto.Key)
+
+			host := ""
+			for _, v := range appConf.HostList {
+				if v.Name == name {
+					host = v.Host
+					break
+				}
+			}
+
+			jsonBody, err := json.Marshal(dto)
+			if err != nil {
+				ctx.JSON(http.StatusServiceUnavailable, gin.H{
+					"msg": err.Error(),
+				})
+				return
+			}
+
+			client := http.Client{}
+			h := fmt.Sprintf("http://%s/app/cache", host)
+			fmt.Println(string(jsonBody))
+			resp, err := client.Post(h, "application/json", bytes.NewReader(jsonBody))
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, gin.H{
+					"msg": "call api err" + err.Error(),
+				})
+				return
+			}
+			defer resp.Body.Close()
+
+			bodyBytes, err := io.ReadAll(resp.Body)
 			ctx.JSON(http.StatusOK, gin.H{
-				"node": name,
+				"node":  name,
+				"value": string(bodyBytes),
 			})
 		})
 	}

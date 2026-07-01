@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"errors"
 	"net/http"
 	"sync"
 
@@ -40,12 +41,12 @@ type AddDto struct {
 func (c *CacheService) Add(ctx *gin.Context) {
 	dto := &AddDto{}
 	if err := ctx.ShouldBindBodyWithJSON(dto); err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "params is invalid."})
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, errors.New("params is invalid."))
 		return
 	}
 
 	if dto.Key == "" {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "key can't be empty string."})
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, errors.New("key can't be empty string."))
 		return
 	}
 
@@ -60,7 +61,7 @@ func (c *CacheService) Add(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusNoContent, "")
+	ctx.String(http.StatusOK, "ok")
 }
 
 type GetDto struct {
@@ -71,12 +72,12 @@ func (c *CacheService) Get(ctx *gin.Context) {
 
 	key := ctx.Param("key")
 	if key == "" {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "key can't be empty string."})
+		ctx.AbortWithError(http.StatusBadRequest, errors.New("key can't be empty string."))
 		return
 	}
 	node := get(c, key)
 	if node == nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "key is not match value."})
+		ctx.AbortWithError(http.StatusBadRequest, errors.New("key is not match value."))
 		return
 	}
 	ctx.JSON(http.StatusOK, node.Value)
@@ -95,11 +96,12 @@ func (c *CacheService) Del(ctx *gin.Context) {
 	// 	return
 	// }
 	key := ctx.Param("key")
-	if key == "" {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "key can't be empty string."})
+	if key != "" {
+		remove(c, key)
+		// ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "key can't be empty string."})
 		return
 	}
-	remove(c, key)
+
 	ctx.JSON(http.StatusNoContent, "")
 }
 
