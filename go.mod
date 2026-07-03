@@ -9,6 +9,7 @@ require (
 	github.com/go-redis/redis/v7 v7.4.1
 	github.com/google/uuid v1.6.0
 	github.com/google/wire v0.7.0
+	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/spf13/viper v1.21.0
 	go.uber.org/zap v1.27.1
 	golang.org/x/crypto v0.40.0
