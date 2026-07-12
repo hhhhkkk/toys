@@ -41,3 +41,5 @@ internal/wire_gen.go
 
 cmd/script/*
 *.db
+
+vendor
