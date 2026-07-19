@@ -1,17 +1,14 @@
 package main
 
-import "time"
+import (
+	"fmt"
+)
 
 func main() {
-	var n = 123
+	var a []int
+	var b []string
 
-	c := make(chan int)
-
-	go func() {
-		c <- n + 0
-	}()
-
-	time.Sleep(time.Second)
-	n = 789
-	println(<-c)
+	fmt.Println(a)
+	fmt.Println(b)
+	fmt.Println(a == b)
 }
