@@ -10,5 +10,5 @@ func main() {
 
 	fmt.Println(a)
 	fmt.Println(b)
-	fmt.Println(a == b)
+	// fmt.Println(a == b)
 }

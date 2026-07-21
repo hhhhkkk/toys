@@ -7,7 +7,10 @@ import (
 	"sync"
 )
 
-type Player int
+type Player struct {
+	Name string
+	col  *Collection
+}
 
 type Game interface {
 	// GetAllPai() *Collection
@@ -18,14 +21,26 @@ type Game interface {
 }
 
 type DouDiZhu struct {
+	// 所有牌
 	col *Collection
+
+	// 出过的牌
+
+	// 剩余的牌
+
+	// player
+	Playeries []*Player
+
+	// 手牌
+
 	// passed *
 	mu sync.RWMutex
 }
 
-func NewDouDiZhu() Game {
+func NewDouDiZhu(p []*Player) Game {
 	d := &DouDiZhu{
-		col: NewCollection(),
+		col:       NewCollection(),
+		Playeries: p,
 	}
 	d.init()
 	return d
@@ -37,24 +52,20 @@ func (r *DouDiZhu) init() {
 	// 字母 花色
 	for i := range 13 {
 		for _, j := range []HuaSe{HeiTao, HongTao, MeiHua, FangPian} {
-			r.col.pais = append(r.col.pais, &pai{
+			r.col.pais = append(r.col.pais, pai{
 				Number: Operator(i + 1),
 				HuaSe:  j,
 			})
 		}
 	}
 	// 大小王
-	r.col.pais = append(r.col.pais, &pai{
+	r.col.pais = append(r.col.pais, pai{
 		Number: Operator(14),
 		HuaSe:  Xiaowang,
-	}, &pai{
+	}, pai{
 		Number: Operator(15),
 		HuaSe:  Dawang,
 	})
-}
-
-func (r *DouDiZhu) GetAllPai() *Collection {
-	return r.col
 }
 
 func (r *DouDiZhu) PrintAll() {
@@ -72,34 +83,12 @@ func (r *DouDiZhu) Shuffle() {
 
 var _ Game = (*DouDiZhu)(nil)
 
-type Collection struct {
-	pais []*pai
-}
-
-type Option func(c *Collection)
-
-func (c *Collection) Print() {
-	for _, p := range c.pais {
-		fmt.Println(p.ToString())
-	}
-}
-
-func NewCollection(opt ...Option) *Collection {
-	collec := &Collection{
-		pais: make([]*pai, 0),
-	}
-	for _, f := range opt {
-		f(collec)
-	}
-	return collec
-}
-
 func (r *DouDiZhu) Begin() {
-	playeries := []Player{Player(1), Player(2), Player(3)}
+	playeries := []Player{}
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	for _, player := range playeries {
+	for range playeries {
 		fmt.Println(len(r.col.pais))
 
 		fenpai := slices.Clone(r.col.pais[:17])
@@ -107,13 +96,11 @@ func (r *DouDiZhu) Begin() {
 		c := &Collection{
 			pais: fenpai,
 		}
-		fmt.Printf("%d, %d\n", player, len(fenpai))
 		c.Print()
 	}
 
 	lastC := &Collection{
 		pais: r.col.pais,
 	}
-	fmt.Println("last")
 	lastC.Print()
 }
