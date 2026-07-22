@@ -34,6 +34,24 @@ func (h HuaSe) ToString() (ret string) {
 	return ret
 }
 
+func (h HuaSe) Weight() (ret int) {
+	switch {
+	case h == HeiTao:
+		ret = 4
+	case h == HongTao:
+		ret = 3
+	case h == MeiHua:
+		ret = 2
+	case h == FangPian:
+		ret = 1
+	case h == Xiaowang:
+		ret = 10000
+	case h == Dawang:
+		ret = 20000
+	}
+	return ret
+}
+
 type Operator int
 
 func (o Operator) ToString() (ret string) {
@@ -68,10 +86,48 @@ func (o Operator) ToString() (ret string) {
 	return ret
 }
 
+func (o Operator) Weight() (ret int) {
+	switch o {
+	case 1:
+		ret = 2000
+	case 2:
+		ret = 3000
+	case 3:
+		ret = 300
+	case 4:
+		ret = 400
+	case 5:
+		ret = 500
+	case 6:
+		ret = 600
+	case 7:
+		ret = 700
+	case 8:
+		ret = 800
+	case 9:
+		ret = 900
+	case 10:
+		ret = 1000
+	case 11:
+		ret = 1100
+	case 12:
+		ret = 1200
+	case 13:
+		ret = 1300
+	}
+	return ret
+}
+
 type pai struct {
 	Number Operator
 	HuaSe  HuaSe
-	Weight int
+}
+
+func NewPai(h HuaSe, n int) pai {
+	return pai{
+		HuaSe:  h,
+		Number: Operator(n),
+	}
 }
 
 func (p pai) Print() {
@@ -83,4 +139,8 @@ func (p pai) ToString() string {
 		return p.HuaSe.ToString()
 	}
 	return fmt.Sprintf("%s %s", p.HuaSe.ToString(), p.Number.ToString())
+}
+
+func (p pai) Weight() int {
+	return p.HuaSe.Weight() + p.Number.Weight()
 }

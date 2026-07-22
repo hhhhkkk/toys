@@ -23,4 +23,6 @@ func main() {
 
 	isDouDiZhi.Begin()
 	isDouDiZhi.CallDiZhu()
+
+	// 牌规则
 }

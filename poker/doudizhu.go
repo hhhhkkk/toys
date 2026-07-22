@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"math/rand/v2"
 	"slices"
 	"sync"
@@ -54,18 +53,10 @@ func (r *DouDiZhu) initPai() {
 	// 字母 花色
 	for i := range 13 {
 		for _, j := range []HuaSe{HeiTao, HongTao, MeiHua, FangPian} {
-			var value int
-			// A and 2
-			if i == 0 || i == 1 {
-				value = 20 + i
-			} else {
-				value = i + 1
-			}
 
 			r.col.pais = append(r.col.pais, pai{
 				Number: Operator(i + 1),
 				HuaSe:  j,
-				Weight: value,
 			})
 		}
 	}
@@ -113,13 +104,6 @@ func (r *DouDiZhu) CallDiZhu() {
 	if p == nil {
 		panic("玩家不存在")
 	}
-
 	p.Col.pais = append(p.Col.pais, r.dizhuPai.pais...)
 	p.Col.Sort()
-
-	for _, player := range r.Playeries {
-		fmt.Println("-----------" + player.Name + "----------")
-		fmt.Printf("--------%#v  %d张牌---------\n", player.isDiZhu, len(player.Col.pais))
-		player.Col.Print()
-	}
 }
