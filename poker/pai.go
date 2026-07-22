@@ -73,11 +73,11 @@ type pai struct {
 	HuaSe  HuaSe
 }
 
-func (p *pai) Print() {
+func (p pai) Print() {
 	fmt.Printf("%d %d\n", p.HuaSe, p.Number)
 }
 
-func (p *pai) ToString() string {
+func (p pai) ToString() string {
 	if slices.Contains([]string{"大王", "小王"}, p.HuaSe.ToString()) {
 		return p.HuaSe.ToString()
 	}

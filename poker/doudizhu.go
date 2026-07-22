@@ -28,6 +28,8 @@ type DouDiZhu struct {
 
 	// 剩余的牌
 
+	// 暗牌
+
 	// player
 	Playeries []*Player
 
@@ -42,28 +44,36 @@ func NewDouDiZhu(p []*Player) Game {
 		col:       NewCollection(),
 		Playeries: p,
 	}
-	d.init()
+	d.initPai()
 	return d
 }
 
-func (r *DouDiZhu) init() {
+func (r *DouDiZhu) initPai() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	// 字母 花色
 	for i := range 13 {
 		for _, j := range []HuaSe{HeiTao, HongTao, MeiHua, FangPian} {
+			var value int
+			// A and 2
+			if i == 0 || i == 1 {
+				value = 10 + i
+			} else {
+				value = i + 1
+			}
+
 			r.col.pais = append(r.col.pais, pai{
-				Number: Operator(i + 1),
+				Number: Operator(value),
 				HuaSe:  j,
 			})
 		}
 	}
 	// 大小王
 	r.col.pais = append(r.col.pais, pai{
-		Number: Operator(14),
+		Number: Operator(20),
 		HuaSe:  Xiaowang,
 	}, pai{
-		Number: Operator(15),
+		Number: Operator(21),
 		HuaSe:  Dawang,
 	})
 }

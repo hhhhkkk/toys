@@ -5,8 +5,11 @@ import (
 	"slices"
 )
 
+type SortHandle func(p1, p2 pai) int
+
 type Collection struct {
-	pais []pai
+	pais       []pai
+	SortHandle SortHandle
 }
 
 type Option func(c *Collection)
@@ -19,7 +22,8 @@ func (c *Collection) Print() {
 
 func NewCollection(opt ...Option) *Collection {
 	collec := &Collection{
-		pais: make([]pai, 0),
+		pais:       make([]pai, 0),
+		SortHandle: DefaultSortHandle,
 	}
 	for _, f := range opt {
 		f(collec)
@@ -27,21 +31,40 @@ func NewCollection(opt ...Option) *Collection {
 	return collec
 }
 
-func (c *Collection) Sort(isAsc bool) *Collection {
-	var gt, lt int
-	if isAsc {
-		gt, lt = 1, -1
-	} else {
-		gt, lt = -1, 1
+func DefaultSortHandle(p1, p2 pai) int {
+	// 先比大小王
+	if p1.HuaSe == Dawang {
+		return -1
 	}
-	slices.SortFunc(c.pais, func(p1, p2 pai) int {
-		if p1.HuaSe > p2.HuaSe {
-			return gt
-		} else if p1.HuaSe < p2.HuaSe {
-			return lt
-		} else {
-			return 0
-		}
-	})
+	if p2.HuaSe == Dawang {
+		return 1
+	}
+
+	if p1.HuaSe == Xiaowang {
+		return -1
+	}
+
+	if p2.HuaSe == Xiaowang {
+		return 1
+	}
+	// 比数字
+	if p1.Number > p2.Number {
+		return -1
+	}
+	if p1.Number < p2.Number {
+		return 1
+	}
+	// 比花色
+	if p1.HuaSe > p2.HuaSe {
+		return -1
+	} else if p1.HuaSe < p2.HuaSe {
+		return 1
+	} else {
+		return 0
+	}
+}
+
+func (c *Collection) Sort() *Collection {
+	slices.SortFunc(c.pais, c.SortHandle)
 	return c
 }
