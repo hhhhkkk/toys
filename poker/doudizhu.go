@@ -107,7 +107,7 @@ func (r *DouDiZhu) Begin() {
 func (r *DouDiZhu) CallDiZhu() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	dizhu := rand.IntN(2)
+	dizhu := rand.IntN(len(r.Playeries))
 
 	p := r.Playeries[dizhu]
 	if p == nil {
@@ -119,6 +119,7 @@ func (r *DouDiZhu) CallDiZhu() {
 
 	for _, player := range r.Playeries {
 		fmt.Println("-----------" + player.Name + "----------")
+		fmt.Printf("--------%#v  %d张牌---------\n", player.isDiZhu, len(player.Col.pais))
 		player.Col.Print()
 	}
 }

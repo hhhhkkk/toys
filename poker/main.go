@@ -4,6 +4,7 @@ func main() {
 	players := []*Player{
 		{
 			Name: "张三",
+			Col:  NewCollection(),
 		},
 		{
 			Name: "李四",
