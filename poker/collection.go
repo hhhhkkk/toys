@@ -48,10 +48,10 @@ func DefaultSortHandle(p1, p2 pai) int {
 		return 1
 	}
 	// 比数字
-	if p1.Number > p2.Number {
+	if p1.Weight > p2.Weight {
 		return -1
 	}
-	if p1.Number < p2.Number {
+	if p1.Weight < p2.Weight {
 		return 1
 	}
 	// 比花色

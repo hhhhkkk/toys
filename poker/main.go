@@ -1,7 +1,17 @@
 package main
 
 func main() {
-	var players []*Player
+	players := []*Player{
+		{
+			Name: "张三",
+		},
+		{
+			Name: "李四",
+		},
+		{
+			Name: "王二",
+		},
+	}
 	// 准备牌集合
 	game := NewDouDiZhu(players)
 
@@ -9,7 +19,7 @@ func main() {
 	if !dizhu {
 		panic("err")
 	}
-	// isDouDiZhi.PrintAll()
-	isDouDiZhi.Shuffle()
+
 	isDouDiZhi.Begin()
+	isDouDiZhi.CallDiZhu()
 }

@@ -8,13 +8,13 @@ import (
 )
 
 type Player struct {
-	Name string
-	col  *Collection
+	Name    string
+	isDiZhu bool
+	Col     *Collection
 }
 
 type Game interface {
 	// GetAllPai() *Collection
-	Shuffle()
 	Begin()
 	// Pass() // 出牌
 	// PassRecord() // 有序 slice
@@ -29,11 +29,10 @@ type DouDiZhu struct {
 	// 剩余的牌
 
 	// 暗牌
+	dizhuPai *Collection
 
 	// player
 	Playeries []*Player
-
-	// 手牌
 
 	// passed *
 	mu sync.RWMutex
@@ -43,6 +42,7 @@ func NewDouDiZhu(p []*Player) Game {
 	d := &DouDiZhu{
 		col:       NewCollection(),
 		Playeries: p,
+		dizhuPai:  NewCollection(),
 	}
 	d.initPai()
 	return d
@@ -57,24 +57,30 @@ func (r *DouDiZhu) initPai() {
 			var value int
 			// A and 2
 			if i == 0 || i == 1 {
-				value = 10 + i
+				value = 20 + i
 			} else {
 				value = i + 1
 			}
 
 			r.col.pais = append(r.col.pais, pai{
-				Number: Operator(value),
+				Number: Operator(i + 1),
 				HuaSe:  j,
+				Weight: value,
 			})
 		}
 	}
 	// 大小王
 	r.col.pais = append(r.col.pais, pai{
-		Number: Operator(20),
+		Number: Operator(30),
 		HuaSe:  Xiaowang,
 	}, pai{
-		Number: Operator(21),
+		Number: Operator(30),
 		HuaSe:  Dawang,
+	})
+
+	// 打乱
+	rand.Shuffle(len(r.col.pais), func(i, j int) {
+		r.col.pais[i], r.col.pais[j] = r.col.pais[j], r.col.pais[i]
 	})
 }
 
@@ -82,35 +88,37 @@ func (r *DouDiZhu) PrintAll() {
 	r.col.Print()
 }
 
-func (r *DouDiZhu) Shuffle() {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	rand.Shuffle(len(r.col.pais), func(i, j int) {
-		r.col.pais[i], r.col.pais[j] = r.col.pais[j], r.col.pais[i]
-	})
-}
-
 var _ Game = (*DouDiZhu)(nil)
 
 func (r *DouDiZhu) Begin() {
-	playeries := []Player{}
-
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	for range playeries {
-		fmt.Println(len(r.col.pais))
-
+	for _, p := range r.Playeries {
 		fenpai := slices.Clone(r.col.pais[:17])
 		r.col.pais = r.col.pais[17:]
-		c := &Collection{
-			pais: fenpai,
-		}
-		c.Print()
+		c := NewCollection()
+		c.pais = fenpai
+		p.Col = c.Sort()
+	}
+	r.dizhuPai = NewCollection()
+	r.dizhuPai.pais = r.col.pais
+}
+
+func (r *DouDiZhu) CallDiZhu() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	dizhu := rand.IntN(2)
+
+	p := r.Playeries[dizhu]
+	if p == nil {
+		panic("玩家不存在")
 	}
 
-	lastC := &Collection{
-		pais: r.col.pais,
+	p.Col.pais = append(p.Col.pais, r.dizhuPai.pais...)
+	p.Col.Sort()
+
+	for _, player := range r.Playeries {
+		fmt.Println("-----------" + player.Name + "----------")
+		player.Col.Print()
 	}
-	lastC.Print()
 }

@@ -71,6 +71,7 @@ func (o Operator) ToString() (ret string) {
 type pai struct {
 	Number Operator
 	HuaSe  HuaSe
+	Weight int
 }
 
 func (p pai) Print() {
