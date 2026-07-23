@@ -66,6 +66,58 @@ type ThreeWith struct {
 	subRule Three
 }
 
+func (t ThreeWith) Check(c *Collection) bool {
+	l := len(c.pais)
+	// 只可能是 3、4、5 张牌
+	if l > 5 || l < 2 {
+		return false
+	}
+	c.Sort()
+	// 如果是三不带，则三张应该一样
+	if l == 3 {
+		return isSame(c)
+	}
+	// 如果是三带一， 那么第二张或者第三张一定是三个的牌
+	// 如果是三带二，那么第 三中一定是三个的牌
+	// 取第三张作为基准牌
+	base := c.pais[2]
+	diff := slices.IndexFunc(c.pais, func(p pai) bool {
+		return p.Number != base.Number
+	})
+
+	// 牌完全一样
+	if diff == -1 {
+		return false
+	}
+
+	// 三带排完序后，一定是以下情况
+	// 要么前一、二张与后三张不一样
+	// 要么后一、二张与后三张不一样
+	// 找到是前缀还是后缀， 然后对比缀是不是一样的
+	// 前缀
+	suffix := NewCollection()
+	suffix.pais = c.pais[:3]
+	if isSame(suffix) {
+		prefix := NewCollection()
+		prefix.pais = c.pais[3:]
+		return isSame(prefix)
+	}
+
+	prefix := NewCollection()
+	prefix.pais = c.pais[l-3:]
+	if isSame(prefix) {
+		nsuffix := NewCollection()
+		if l == 4 {
+			nsuffix.pais = c.pais[:1]
+		}
+		if l == 5 {
+			nsuffix.pais = c.pais[:2]
+		}
+		return isSame(nsuffix)
+	}
+	return false
+}
+
 // Plane 飞机.
 type Plane struct {
 	subRule Three

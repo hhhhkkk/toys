@@ -1,6 +1,8 @@
 package main
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestBoom(t *testing.T) {
 	units := []struct {
@@ -265,6 +267,66 @@ func TestIsIndex(t *testing.T) {
 		}
 		if k > 5 && isIndex(c) != true {
 			t.Fatalf("P%d", k+1)
+		}
+	}
+}
+
+func TestThreeWith(t *testing.T) {
+	tests := [][]pai{
+		{
+			NewPai(HeiTao, 1),
+			NewPai(HeiTao, 1),
+			NewPai(HeiTao, 1),
+		},
+		{
+			NewPai(HeiTao, 3),
+			NewPai(HeiTao, 4),
+			NewPai(HeiTao, 5),
+		},
+		{
+			NewPai(Dawang, 0),
+			NewPai(HeiTao, 1),
+			NewPai(HeiTao, 1),
+			NewPai(HeiTao, 1),
+		},
+		{
+			NewPai(Xiaowang, 0),
+			NewPai(HeiTao, 1),
+			NewPai(HeiTao, 1),
+			NewPai(HeiTao, 1),
+		},
+		{
+			NewPai(HongTao, 2),
+			NewPai(HeiTao, 2),
+			NewPai(HeiTao, 1),
+			NewPai(HeiTao, 1),
+		},
+		{
+			NewPai(HongTao, 4),
+			NewPai(HeiTao, 5),
+			NewPai(HeiTao, 6),
+			NewPai(HeiTao, 7),
+			NewPai(HeiTao, 8),
+		},
+		{
+			NewPai(HongTao, 2),
+			NewPai(HeiTao, 2),
+			NewPai(HeiTao, 3),
+			NewPai(HeiTao, 3),
+			NewPai(HeiTao, 3),
+		},
+	}
+
+	handler := ThreeWith{}
+	for k, p := range tests {
+		c := NewCollection()
+		c.pais = p
+		res := []bool{true, false, true, true, false, false, true}
+		if handler.Check(c) != res[k] {
+			t.Errorf("p%d fail", k)
+			return
+		} else {
+			t.Logf("p%d pass", k)
 		}
 	}
 }
